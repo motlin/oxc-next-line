@@ -84,9 +84,9 @@ use crate::{
             should_preserve_quote_for_enum_member,
         },
         statement_body::{
-            FormatStatementBody, write_comments_between_blocks, write_head_body_separator,
-            write_node_with_terminator, write_node_with_trailing_comments_before,
-            write_trailing_comments_before,
+            FormatStatementBody, write_brace_keyword_separator, write_comments_between_blocks,
+            write_head_body_separator, write_head_brace_separator, write_node_with_terminator,
+            write_node_with_trailing_comments_before, write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
@@ -697,7 +697,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, DoWhileStatement<'a>> {
             // The block's trailing pass would claim a comment past the `while` keyword;
             // the keyword site splits the comments instead.
             write!(f, "do");
-            write_head_body_separator(body.span().start, f);
+            write_head_brace_separator(body.span().start, f);
             FormatNodeWithoutTrailingComments(&body).fmt(f);
         } else {
             write!(f, group(&format_args!("do", FormatStatementBody::new(&body))));
@@ -707,7 +707,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, DoWhileStatement<'a>> {
         let comments = f.context().comments().comments_before_character(body.span().end, b'w');
         if write_comments_between_blocks(comments, f) {
             if is_block_body {
-                write!(f, space());
+                write_brace_keyword_separator(f);
             } else {
                 write!(f, hard_line_break());
             }
@@ -1007,7 +1007,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IfStatement<'a>> {
                 f.context().comments().comments_before_character(consequent.span().end, b'e');
             if write_comments_between_blocks(comments, f) {
                 if matches!(consequent.as_ref(), Statement::BlockStatement(_)) {
-                    write!(f, space());
+                    write_brace_keyword_separator(f);
                 } else {
                     write!(f, hard_line_break());
                 }
@@ -1292,7 +1292,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSEnumDeclaration<'a>> {
         }
         let body = self.body();
         write!(f, ["enum", space(), FormatNodeWithoutTrailingComments(&self.id())]);
-        write_head_body_separator(body.span().start, f);
+        write_head_brace_separator(body.span().start, f);
         write!(f, ["{", body, "}"]);
     }
 }
@@ -1707,7 +1707,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
                 write!(f, [&format_args!(format_id, format_extends)]);
             }
 
-            write_head_body_separator(body.span().start, f);
+            write_head_brace_separator(body.span().start, f);
             // Leading comments are printed by the separator above
             body.write(f);
         });
@@ -1881,7 +1881,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSExternalModuleDeclaration<'a>> {
         write!(f, ["module", space()]);
         if let Some(body) = self.body() {
             write!(f, FormatNodeWithoutTrailingComments(&self.id()));
-            write_head_body_separator(body.span().start, f);
+            write_head_brace_separator(body.span().start, f);
             write!(f, body);
         } else {
             write!(f, [self.id(), OptionalSemicolon]);
@@ -1910,7 +1910,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSNamespaceDeclaration<'a>> {
                 }
                 AstNodeKind::TSModuleBlock(block) => {
                     write!(f, FormatNodeWithoutTrailingComments(&id));
-                    write_head_body_separator(block.span().start, f);
+                    write_head_brace_separator(block.span().start, f);
                     write!(f, block);
                     break;
                 }
@@ -1931,7 +1931,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSGlobalDeclaration<'a>> {
         write!(f, FormatLeadingComments::Comments(comments_before_global));
         let body = self.body();
         write!(f, "global");
-        write_head_body_separator(body.span().start, f);
+        write_head_brace_separator(body.span().start, f);
         write!(f, body);
     }
 }

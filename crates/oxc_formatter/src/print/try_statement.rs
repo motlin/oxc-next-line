@@ -14,7 +14,9 @@ use crate::{
 use super::FormatWrite;
 use crate::utils::{
     format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-    statement_body::{write_comments_between_blocks, write_head_body_separator},
+    statement_body::{
+        write_brace_keyword_separator, write_comments_between_blocks, write_head_brace_separator,
+    },
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TryStatement<'a>> {
@@ -24,11 +26,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TryStatement<'a>> {
         let finalizer = self.finalizer();
 
         write!(f, "try");
-        write_head_body_separator(block.span.start, f);
+        write_head_brace_separator(block.span.start, f);
         write_block_before_keyword(&block, handler.is_some() || finalizer.is_some(), f);
 
         if let Some(handler) = handler {
-            write!(f, space());
+            write_brace_keyword_separator(f);
             write_block_before_keyword(&handler, finalizer.is_some(), f);
         }
         if let Some(finalizer) = finalizer {
@@ -38,8 +40,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TryStatement<'a>> {
                 f.context().comments().comments_before_character(previous_end, b'f');
             // The pending space is dropped at a line start and coalesced otherwise
             write_comments_between_blocks(before_keyword, f);
-            write!(f, [space(), "finally"]);
-            write_head_body_separator(finalizer.span.start, f);
+            write_brace_keyword_separator(f);
+            write!(f, "finally");
+            write_head_brace_separator(finalizer.span.start, f);
             write!(f, finalizer);
         }
     }
@@ -62,13 +65,13 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CatchClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let leading_comments = f.context().comments().comments_before(self.span.start);
         if write_comments_between_blocks(leading_comments, f) {
-            write!(f, space());
+            write_brace_keyword_separator(f);
         }
 
         write!(f, ["catch", space(), self.param()]);
 
         let block = self.body();
-        write_head_body_separator(block.span.start, f);
+        write_head_brace_separator(block.span.start, f);
         write!(f, block);
     }
 }
