@@ -122,6 +122,24 @@ Whether to skip formatting the frontmatter.
 - Default: `false`
 
 
+## braceStyle
+
+type: `"1tbs" | "stroustrup" | "allman"`
+
+
+Where the opening brace of a block, function, class or wrapped object is placed.
+
+NOTE: Only `"1tbs"` matches Prettier.
+
+- `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
+- `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
+- `"allman"`: `{` of every block, and of every object, import, export,
+destructuring or type literal that wraps, goes on a line of its own.
+
+- Languages: JS, JSX, TS, TSX
+- Default: `"1tbs"`
+
+
 ## bracketSameLine
 
 type: `boolean`
