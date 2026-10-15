@@ -30,6 +30,15 @@
       ],
       "markdownDescription": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting, `false` to disable (handy in overrides).\nSetting `true` resets to defaults, dropping options inherited from a parent scope.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime.\nOxfmt does NOT bundle it, so install it in your project, otherwise formatting fails.\n\n- Languages: Astro\n- Default: Disabled"
     },
+    "braceStyle": {
+      "description": "Where the opening brace of a block, function, class or wrapped object is placed.\n\nNOTE: Only `\"1tbs\"` matches Prettier.\n\n- `\"1tbs\"`: `{` stays on the same line, and `} else {` shares a line.\n- `\"stroustrup\"`: like `\"1tbs\"`, but `else` / `catch` / `finally` start a new line.\n- `\"allman\"`: `{` of every block, and of every object, import, export,\ndestructuring or type literal that wraps, goes on a line of its own.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"1tbs\"`",
+      "allOf": [
+        {
+          "$ref": "#/definitions/BraceStyleConfig"
+        }
+      ],
+      "markdownDescription": "Where the opening brace of a block, function, class or wrapped object is placed.\n\nNOTE: Only `\"1tbs\"` matches Prettier.\n\n- `\"1tbs\"`: `{` stays on the same line, and `} else {` shares a line.\n- `\"stroustrup\"`: like `\"1tbs\"`, but `else` / `catch` / `finally` start a new line.\n- `\"allman\"`: `{` of every block, and of every object, import, export,\ndestructuring or type literal that wraps, goes on a line of its own.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"1tbs\"`"
+    },
     "bracketSameLine": {
       "description": "Put the `>` of a multi-line element at the end of the last line,\ninstead of being alone on the next line (does not apply to self-closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`",
       "type": "boolean",
@@ -295,6 +304,14 @@
         }
       ]
     },
+    "BraceStyleConfig": {
+      "type": "string",
+      "enum": [
+        "1tbs",
+        "stroustrup",
+        "allman"
+      ]
+    },
     "CommentLineStrategyConfig": {
       "type": "string",
       "enum": [
@@ -375,6 +392,15 @@
             }
           ],
           "markdownDescription": "Options for `prettier-plugin-astro`.\n\nPass `true` or an object to enable `.astro` file formatting, `false` to disable (handy in overrides).\nSetting `true` resets to defaults, dropping options inherited from a parent scope.\n\nNOTE: `prettier-plugin-astro` requires the `@astrojs/compiler-rs` package at runtime.\nOxfmt does NOT bundle it, so install it in your project, otherwise formatting fails.\n\n- Languages: Astro\n- Default: Disabled"
+        },
+        "braceStyle": {
+          "description": "Where the opening brace of a block, function, class or wrapped object is placed.\n\nNOTE: Only `\"1tbs\"` matches Prettier.\n\n- `\"1tbs\"`: `{` stays on the same line, and `} else {` shares a line.\n- `\"stroustrup\"`: like `\"1tbs\"`, but `else` / `catch` / `finally` start a new line.\n- `\"allman\"`: `{` of every block, and of every object, import, export,\ndestructuring or type literal that wraps, goes on a line of its own.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"1tbs\"`",
+          "allOf": [
+            {
+              "$ref": "#/definitions/BraceStyleConfig"
+            }
+          ],
+          "markdownDescription": "Where the opening brace of a block, function, class or wrapped object is placed.\n\nNOTE: Only `\"1tbs\"` matches Prettier.\n\n- `\"1tbs\"`: `{` stays on the same line, and `} else {` shares a line.\n- `\"stroustrup\"`: like `\"1tbs\"`, but `else` / `catch` / `finally` start a new line.\n- `\"allman\"`: `{` of every block, and of every object, import, export,\ndestructuring or type literal that wraps, goes on a line of its own.\n\n- Languages: JS, JSX, TS, TSX\n- Default: `\"1tbs\"`"
         },
         "bracketSameLine": {
           "description": "Put the `>` of a multi-line element at the end of the last line,\ninstead of being alone on the next line (does not apply to self-closing elements).\n\n- Languages: JSX, TSX, HTML, Angular, Vue, MJML, Svelte, Astro\n- Default: `false`",

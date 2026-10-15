@@ -1,18 +1,18 @@
 #[cfg(feature = "napi")]
 use oxc_formatter::SortTailwindcssOptions;
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CommentLineStrategy,
-    CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions,
-    JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TrailingCommas,
+    ArrowParentheses, AttributePosition, BraceStyle, BracketSameLine, BracketSpacing,
+    CommentLineStrategy, CustomGroupDefinition, Expand, GroupEntry, ImportModifier, ImportSelector,
+    JsFormatOptions, JsdocOptions, LineWrappingStyle, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
 use super::super::oxfmtrc::{
-    ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
-    ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
-    ObjectWrapConfig, OperatorPositionConfig, QuotePropsConfig, SortGroupItemConfig,
-    SortImportsUserConfig, SortOrderConfig, TrailingCommaConfig,
+    ArrowParensConfig, BraceStyleConfig, CommentLineStrategyConfig, FormatConfig,
+    HtmlWhitespaceSensitivityConfig, ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig,
+    LineWrappingStyleConfig, ObjectWrapConfig, OperatorPositionConfig, QuotePropsConfig,
+    SortGroupItemConfig, SortImportsUserConfig, SortOrderConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsFormatOptions` for `oxc_formatter`.
@@ -70,6 +70,15 @@ pub fn to_oxc_formatter(
         format_options.arrow_parentheses = match parens {
             ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
             ArrowParensConfig::Always => ArrowParentheses::Always,
+        };
+    }
+
+    // [Oxfmt] braceStyle: "1tbs" | "stroustrup" | "allman"
+    if let Some(style) = config.brace_style {
+        format_options.brace_style = match style {
+            BraceStyleConfig::OneTbs => BraceStyle::OneTbs,
+            BraceStyleConfig::Stroustrup => BraceStyle::Stroustrup,
+            BraceStyleConfig::Allman => BraceStyle::Allman,
         };
     }
 
@@ -424,6 +433,24 @@ mod tests {
         let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
         let format_options = build(&config).unwrap();
         assert!(format_options.arrow_parentheses.is_always());
+    }
+
+    #[test]
+    fn test_brace_style() {
+        let config: FormatConfig = serde_json::from_str("{}").unwrap();
+        assert_eq!(build(&config).unwrap().brace_style, BraceStyle::OneTbs);
+
+        for (value, expected) in [
+            ("1tbs", BraceStyle::OneTbs),
+            ("stroustrup", BraceStyle::Stroustrup),
+            ("allman", BraceStyle::Allman),
+        ] {
+            let config: FormatConfig =
+                serde_json::from_str(&format!(r#"{{"braceStyle": "{value}"}}"#)).unwrap();
+            assert_eq!(build(&config).unwrap().brace_style, expected);
+        }
+
+        assert!(serde_json::from_str::<FormatConfig>(r#"{"braceStyle": "next-line"}"#).is_err());
     }
 
     #[test]
