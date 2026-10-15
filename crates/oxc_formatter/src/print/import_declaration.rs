@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
+    Format, FormatTrailingCommas, JsFormatContext, JsLabels, TrailingSeparator,
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
@@ -18,6 +18,20 @@ use crate::{
 };
 
 use super::FormatWrite;
+
+/// Writes `{ specifiers }` of an import or export as one group.
+/// Under Allman the leading break shares that group,
+/// so `{` moves to its own line exactly when the specifiers wrap.
+pub(super) fn write_specifiers_group<'a>(
+    specifiers: &impl Format<'a, JsFormatContext<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    if f.options().brace_style.breaks_before_open_brace() {
+        write!(f, group(&format_args!(soft_line_break(), "{", specifiers, "}")));
+    } else {
+        write!(f, ["{", group(specifiers), "}"]);
+    }
+}
 
 impl<'a> Format<'a, JsFormatContext<'a>> for ImportOrExportKind {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -141,37 +155,29 @@ impl<'a> Format<'a, JsFormatContext<'a>>
                 ]
             );
         } else {
-            write!(
-                f,
-                [
-                    "{",
-                    group(&soft_block_indent_with_maybe_space(
-                        &format_once(|f| {
-                            let trailing_separator =
-                                FormatTrailingCommas::ES5.trailing_separator(f.options());
-                            let iter = FormatSeparatedIter::new(specifiers_iter, ",")
-                                .with_trailing_separator(trailing_separator)
-                                .map(|specifier| {
-                                    format_with(move |f| {
-                                        // Should add empty line before the specifier if there are comments before it.
-                                        let specifier_span = specifier.span();
-                                        if f.context()
-                                            .comments()
-                                            .has_comment_before(specifier_span.start)
-                                            && f.lines_before(specifier_span) > 1
-                                        {
-                                            write!(f, [empty_line()]);
-                                        }
-                                        write!(f, specifier);
-                                    })
-                                });
-                            f.join_with(soft_line_break_or_space()).entries(iter);
-                        }),
-                        should_insert_space_around_brackets
-                    )),
-                    "}"
-                ]
+            let format_specifiers = format_once(|f| {
+                let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
+                let iter = FormatSeparatedIter::new(specifiers_iter, ",")
+                    .with_trailing_separator(trailing_separator)
+                    .map(|specifier| {
+                        format_with(move |f| {
+                            // Should add empty line before the specifier if there are comments before it.
+                            let specifier_span = specifier.span();
+                            if f.context().comments().has_comment_before(specifier_span.start)
+                                && f.lines_before(specifier_span) > 1
+                            {
+                                write!(f, [empty_line()]);
+                            }
+                            write!(f, specifier);
+                        })
+                    });
+                f.join_with(soft_line_break_or_space()).entries(iter);
+            });
+            let specifiers = soft_block_indent_with_maybe_space(
+                &format_specifiers,
+                should_insert_space_around_brackets,
             );
+            write_specifiers_group(&specifiers, f);
         }
     }
 }

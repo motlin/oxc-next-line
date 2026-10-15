@@ -47,6 +47,33 @@ pub fn write_head_body_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
     FormatLeadingComments::Comments(comments).fmt(f);
 }
 
+/// [`write_head_body_separator`] for a body that opens with `{`:
+/// under [`BraceStyle::Allman`](crate::BraceStyle::Allman) the `{` then starts its own line.
+/// A break already written by a head-side line comment is not doubled:
+/// the printer skips a line break while the line is still empty.
+pub fn write_head_brace_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
+    write_head_body_separator(body_start, f);
+    write_open_brace_break(f);
+}
+
+/// The line break before a `{` under [`BraceStyle::Allman`](crate::BraceStyle::Allman), nothing otherwise.
+/// For a `{` not preceded by [`write_head_brace_separator`]; a pending `space()` is dropped at the line start.
+pub fn write_open_brace_break(f: &mut JsFormatter<'_, '_>) {
+    if f.options().brace_style.breaks_before_open_brace() {
+        write!(f, hard_line_break());
+    }
+}
+
+/// The default separator between a block's `}` and a following `else`/`catch`/`finally`/`while`:
+/// a space under [`BraceStyle::OneTbs`](crate::BraceStyle::OneTbs), a line break otherwise.
+pub fn write_brace_keyword_separator(f: &mut JsFormatter<'_, '_>) {
+    if f.options().brace_style.breaks_before_keyword() {
+        write!(f, hard_line_break());
+    } else {
+        write!(f, space());
+    }
+}
+
 /// Prints `node` with its generic trailing pass suppressed, then its trailing
 /// comments bounded at the next `character` (a `:` clause colon, a head's `)`).
 /// The caller prints that token next; comments past it are left pending
@@ -235,7 +262,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
             }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
-            write_head_body_separator(block.span().start, f);
+            write_head_brace_separator(block.span().start, f);
             write!(f, [block]);
         } else if self.force_space {
             write!(f, [space(), self.body]);
