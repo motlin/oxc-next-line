@@ -12,7 +12,7 @@ use crate::{
     },
     utils::{
         is_dropped_statement,
-        statement_body::{FormatStatementBody, write_node_with_terminator},
+        statement_body::{FormatStatementBody, write_node_with_terminator, write_open_brace_break},
     },
     write,
 };
@@ -36,20 +36,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SwitchStatement<'a>> {
                 cases.fmt(f);
             }
         });
-        write!(
-            f,
-            [
-                "switch",
-                space(),
-                "(",
-                group(&soft_block_indent(&discriminant)),
-                ")",
-                space(),
-                "{",
-                block_indent(&format_cases),
-                "}"
-            ]
-        );
+        write!(f, ["switch", space(), "(", group(&soft_block_indent(&discriminant)), ")", space()]);
+        write_open_brace_break(f);
+        write!(f, ["{", block_indent(&format_cases), "}"]);
     }
 }
 

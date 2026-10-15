@@ -23,7 +23,7 @@ use crate::{
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, import_declaration::write_specifiers_group};
 
 fn format_export_keyword_with_class_decorators<'a>(
     span: Span,
@@ -104,19 +104,16 @@ fn format_export_specifiers_block<'a>(
                 ]
             );
         }
-        write!(f, [export_kind, "{", format_dangling_comments(span).with_block_indent()]);
+        write!(f, [export_kind, "{", format_dangling_comments(span).with_block_indent(), "}"]);
     } else if specifiers.len() == 1
         && f.comments().comments_before_character(span.start, b'}').is_empty()
     {
         let space = maybe_space(needs_space).memoized();
-        write!(f, [export_kind, "{", space, specifiers.first(), space]);
+        write!(f, [export_kind, "{", space, specifiers.first(), space, "}"]);
     } else {
-        write!(
-            f,
-            [export_kind, "{", group(&soft_block_indent_with_maybe_space(specifiers, needs_space))]
-        );
+        write!(f, export_kind);
+        write_specifiers_group(&soft_block_indent_with_maybe_space(specifiers, needs_space), f);
     }
-    write!(f, "}");
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportDefaultDeclaration<'a>> {

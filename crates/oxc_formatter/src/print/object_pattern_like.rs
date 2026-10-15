@@ -4,9 +4,10 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         JsFormatContext, JsFormatter,
-        prelude::{format_with, group, soft_block_indent_with_maybe_space},
+        prelude::{format_with, group, soft_block_indent_with_maybe_space, soft_line_break},
         trivia::format_dangling_comments,
     },
     utils::object::should_preserve_quote,
@@ -116,7 +117,11 @@ impl<'a> ObjectPatternLike<'a, '_> {
         if break_properties {
             ObjectPatternLayout::Group { expand: true }
         } else if self.is_in_assignment_like() {
-            ObjectPatternLayout::Inline
+            if f.options().brace_style.breaks_before_open_brace() {
+                ObjectPatternLayout::AssignmentLeft
+            } else {
+                ObjectPatternLayout::Inline
+            }
         } else {
             ObjectPatternLayout::Group { expand: false }
         }
@@ -164,21 +169,34 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
             );
         });
 
-        write!(f, ["{"]);
-
         match self.layout(f) {
             ObjectPatternLayout::Empty => {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+                write!(
+                    f,
+                    ["{", format_dangling_comments(self.span()).with_soft_block_indent(), "}"]
+                );
             }
             ObjectPatternLayout::Inline => {
-                write!(f, format_properties);
+                write!(f, ["{", format_properties, "}"]);
+            }
+            ObjectPatternLayout::AssignmentLeft => {
+                write!(f, [soft_line_break(), "{", format_properties, "}"]);
+            }
+            ObjectPatternLayout::Group { expand }
+                if f.options().brace_style.breaks_before_open_brace() =>
+            {
+                // The leading break shares the properties' group,
+                // so `{` moves to its own line exactly when the pattern wraps.
+                write!(
+                    f,
+                    [group(&format_args!(soft_line_break(), "{", format_properties, "}"))
+                        .should_expand(expand)]
+                );
             }
             ObjectPatternLayout::Group { expand } => {
-                write!(f, group(&format_properties).should_expand(expand));
+                write!(f, ["{", group(&format_properties).should_expand(expand), "}"]);
             }
         }
-
-        write!(f, "}");
     }
 }
 
@@ -197,4 +215,8 @@ enum ObjectPatternLayout {
     /// Desired if the pattern is a parameter of a function that `should hug` OR
     /// if the pattern is the left side of an assignment.
     Inline,
+
+    /// [`ObjectPatternLayout::Inline`] for the left side of an assignment under Allman:
+    /// the `{` also moves to its own line when the assignment's group breaks the properties.
+    AssignmentLeft,
 }
