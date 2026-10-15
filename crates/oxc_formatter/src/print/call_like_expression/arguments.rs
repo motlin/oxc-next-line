@@ -549,8 +549,11 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
 fn can_group_expression_argument(argument: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
     match argument {
         Expression::ObjectExpression(object_expression) => {
-            !object_expression.properties.is_empty()
-                || f.comments().has_comment_in_span(object_expression.span)
+            // A hugged object would print `call(\n{` once its `{` moves to its own line,
+            // so under Allman a wrapping object breaks the arguments instead.
+            !f.options().brace_style.breaks_before_open_brace()
+                && (!object_expression.properties.is_empty()
+                    || f.comments().has_comment_in_span(object_expression.span))
         }
         Expression::ArrayExpression(array_expression) => {
             !array_expression.elements.is_empty()

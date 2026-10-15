@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     ast_nodes::AstNode, format_args, formatter::prelude::*, print::semicolon::OptionalSemicolon,
-    utils::statement_body::write_head_body_separator, write,
+    utils::statement_body::write_head_brace_separator, write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Function<'a>> {
@@ -116,7 +116,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FunctionBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write_head_body_separator(self.span.start, f);
+        write_head_brace_separator(self.span.start, f);
 
         let statements = self.statements();
         let directives = self.directives();
