@@ -5,9 +5,10 @@ use oxc_span::GetSpan;
 use crate::source_text::SourceTextExt as _;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
+    format_args,
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
-        prelude::{format_with, group, soft_block_indent_with_maybe_space},
+        prelude::{format_with, group, soft_block_indent_with_maybe_space, soft_line_break},
         trivia::format_dangling_comments,
     },
     options::Expand,
@@ -67,6 +68,36 @@ impl<'a> ObjectLike<'a, '_> {
         }
     }
 
+    /// Whether moving `{` onto its own line would change what the program means.
+    ///
+    /// `return` / `throw` / `yield` are subject to ASI: `return\n{ a: 1 }` returns nothing.
+    /// The hazard applies whenever the object is the argument's left-most token
+    /// (`return { a: 1 }.a`), so start offsets are compared instead of enumerating wrappers;
+    /// a parenthesized argument starts elsewhere and is correctly left alone.
+    fn brace_break_is_unsafe(&self) -> bool {
+        let Self::ObjectExpression(object) = self else { return false };
+        let start = object.span.start;
+
+        for ancestor in object.ancestors() {
+            match ancestor {
+                AstNodes::ReturnStatement(node) => {
+                    return node.argument.as_ref().is_some_and(|it| it.span().start == start);
+                }
+                AstNodes::ThrowStatement(node) => return node.argument.span().start == start,
+                AstNodes::YieldExpression(node) => {
+                    return node.argument.as_ref().is_some_and(|it| it.span().start == start);
+                }
+                // Being the left-most token cannot hold across a statement or body boundary
+                AstNodes::BlockStatement(_) | AstNodes::FunctionBody(_) | AstNodes::Program(_) => {
+                    return false;
+                }
+                _ => {}
+            }
+        }
+
+        false
+    }
+
     fn members_are_empty(&self) -> bool {
         match self {
             Self::ObjectExpression(o) => o.properties().is_empty(),
@@ -86,13 +117,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 
-        write!(f, "{");
-
         if self.members_are_empty() {
             // Soft indent so the object can stay on one line if it fits:
             // a single one-line block comment stays inline without bracket spacing
             // line comments and multiple comments still expand.
-            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+            write!(f, ["{", format_dangling_comments(self.span()).with_soft_block_indent(), "}"]);
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
             let should_expand =
@@ -112,12 +141,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
                 soft_block_indent_with_maybe_space(&members, should_insert_space_around_brackets);
 
             if should_hug {
-                write!(f, inner);
+                write!(f, ["{", inner, "}"]);
+            } else if f.options().brace_style.breaks_before_open_brace()
+                && !self.brace_break_is_unsafe()
+            {
+                // The leading break shares the members' group,
+                // so `{` moves to its own line exactly when the object wraps.
+                write!(
+                    f,
+                    [group(&format_args!(soft_line_break(), "{", inner, "}"))
+                        .should_expand(should_expand)]
+                );
             } else {
-                write!(f, [group(&inner).should_expand(should_expand)]);
+                write!(f, ["{", group(&inner).should_expand(should_expand), "}"]);
             }
         }
-
-        write!(f, "}");
     }
 }
