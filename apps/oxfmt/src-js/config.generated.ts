@@ -33,6 +33,7 @@ export type Language =
   | "mdx";
 export type AstroUserConfig = boolean | AstroConfig;
 export type AstroCompressHtmlConfig = "jsx" | "html" | "none";
+export type BraceStyleConfig = "1tbs" | "stroustrup" | "allman";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type OperatorPositionConfig = "start" | "end";
@@ -106,6 +107,20 @@ export interface Oxfmtrc {
    * - Default: Disabled
    */
   astro?: AstroUserConfig;
+  /**
+   * Where the opening brace of a block, function, class or wrapped object is placed.
+   *
+   * NOTE: Only `"1tbs"` matches Prettier.
+   *
+   * - `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
+   * - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
+   * - `"allman"`: `{` of every block, and of every object, import, export,
+   * destructuring or type literal that wraps, goes on a line of its own.
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `"1tbs"`
+   */
+  braceStyle?: BraceStyleConfig;
   /**
    * Put the `>` of a multi-line element at the end of the last line,
    * instead of being alone on the next line (does not apply to self-closing elements).
@@ -505,6 +520,20 @@ export interface FormatConfig {
    * - Default: Disabled
    */
   astro?: AstroUserConfig;
+  /**
+   * Where the opening brace of a block, function, class or wrapped object is placed.
+   *
+   * NOTE: Only `"1tbs"` matches Prettier.
+   *
+   * - `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
+   * - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
+   * - `"allman"`: `{` of every block, and of every object, import, export,
+   * destructuring or type literal that wraps, goes on a line of its own.
+   *
+   * - Languages: JS, JSX, TS, TSX
+   * - Default: `"1tbs"`
+   */
+  braceStyle?: BraceStyleConfig;
   /**
    * Put the `>` of a multi-line element at the end of the last line,
    * instead of being alone on the next line (does not apply to self-closing elements).

@@ -174,3 +174,15 @@ fn allman_puts_wrapped_export_braces_on_the_next_line() {
         "export\n{\n  alphaaaaaa,\n  betaaaaaaa,\n  gammaaaaa,\n} from \"x\";\n",
     );
 }
+
+#[test]
+fn stroustrup_moves_only_the_keywords_after_a_closing_brace() {
+    assert_eq!(
+        format_with(
+            "if (a) { b(); } else { c(); } try { d(); } catch (e) { f(); } finally { g(); } do { h(); } while (i);",
+            SourceType::mjs(),
+            BraceStyle::Stroustrup,
+        ),
+        "if (a) {\n  b();\n}\nelse {\n  c();\n}\ntry {\n  d();\n}\ncatch (e) {\n  f();\n}\nfinally {\n  g();\n}\ndo {\n  h();\n}\nwhile (i);\n",
+    );
+}
