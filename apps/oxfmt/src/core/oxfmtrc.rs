@@ -152,6 +152,19 @@ pub struct FormatConfig {
     /// - Default: `"always"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arrow_parens: Option<ArrowParensConfig>,
+    /// Where the opening brace of a block, function, class or wrapped object is placed.
+    ///
+    /// NOTE: Only `"1tbs"` matches Prettier.
+    ///
+    /// - `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
+    /// - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
+    /// - `"allman"`: `{` of every block, and of every object, import, export,
+    ///   destructuring or type literal that wraps, goes on a line of its own.
+    ///
+    /// - Languages: JS, JSX, TS, TSX
+    /// - Default: `"1tbs"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub brace_style: Option<BraceStyleConfig>,
     /// Print spaces between brackets in object literals.
     ///
     /// - Languages: JS, JSX, TS, TSX, JSON, JSONC, JSON5, GraphQL, YAML
@@ -452,6 +465,15 @@ pub enum TrailingCommaConfig {
 pub enum ArrowParensConfig {
     Always,
     Avoid,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum BraceStyleConfig {
+    #[serde(rename = "1tbs")]
+    OneTbs,
+    Stroustrup,
+    Allman,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
