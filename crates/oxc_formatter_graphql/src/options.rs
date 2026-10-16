@@ -15,6 +15,24 @@ pub struct GraphqlFormatOptions {
     pub line_ending: LineEnding,
     /// Spaces inside `{ ... }` of object values. Mirrors Prettier's `bracketSpacing`.
     pub bracket_spacing: BracketSpacing,
+    /// Where the `{` of selection sets, definitions and object values goes.
+    pub brace_style: BraceStyle,
+}
+
+/// Where the opening `{` is placed.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum BraceStyle {
+    /// Prettier's behavior: `{` ends the line it belongs to.
+    #[default]
+    SameLine,
+    /// `{` of every multi-line body, and of every object value that wraps, starts its own line.
+    NextLine,
+}
+
+impl BraceStyle {
+    pub fn is_next_line(self) -> bool {
+        matches!(self, Self::NextLine)
+    }
 }
 
 /// Whether to insert spaces around brackets in object values.

@@ -24,6 +24,7 @@ pub(super) fn write_selection_set<'a>(
     let selections = selection_set.selections.as_slice();
     let r_curly = close_delim_start(selection_set.span);
 
+    common::write_open_brace_break(f);
     write!(f, "{");
     if selections.is_empty() {
         common::write_empty_delimited(r_curly, "}", f);

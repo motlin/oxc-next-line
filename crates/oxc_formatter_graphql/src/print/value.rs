@@ -4,8 +4,10 @@
 
 use oxc_formatter_core::{
     FormatContext,
-    builders::{group, soft_block_indent, soft_block_indent_with_maybe_space, text},
-    write,
+    builders::{
+        group, soft_block_indent, soft_block_indent_with_maybe_space, soft_line_break, space, text,
+    },
+    format_args, write,
 };
 use oxc_graphql_parser::ast::{ListValue, ObjectValue, Value};
 
@@ -60,8 +62,8 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
     let fields = object.fields.as_slice();
     let r_curly = close_delim_start(object.span);
 
-    write!(f, "{");
     if fields.is_empty() {
+        write!(f, "{");
         common::write_empty_delimited(r_curly, "}", f);
         return;
     }
@@ -73,7 +75,8 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
             let field = &fields[i];
             common::write_name(&field.name, f);
             flush_trailing_before_literal(to_span(field.name.span).end, f);
-            write!(f, ": ");
+            // `space()`, not `" "`: a next-line object value's break drops it
+            write!(f, [":", space()]);
             if let Some(v) = field.value.as_ref() {
                 write_value(v, f);
             }
@@ -82,5 +85,12 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
             flush_trailing_inside_comments(last_end, r_curly, f);
         }
     });
-    write!(f, [group(&soft_block_indent_with_maybe_space(&body, bracket_spacing)), "}"]);
+    let inner = soft_block_indent_with_maybe_space(&body, bracket_spacing);
+    if f.context().options().brace_style.is_next_line() {
+        // The leading break shares the fields' group,
+        // so `{` moves to its own line exactly when the object wraps.
+        write!(f, group(&format_args!(soft_line_break(), "{", inner, "}")));
+    } else {
+        write!(f, ["{", group(&inner), "}"]);
+    }
 }
