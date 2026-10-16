@@ -12,70 +12,70 @@ const FUNCTION_WITH_IF_ELSE: &str =
     "function example(value) { if (value) { return true; } else { return false; } }";
 
 #[test]
-fn one_tbs_is_the_default_and_unchanged() {
-    assert_eq!(JsFormatOptions::default().brace_style, BraceStyle::OneTbs);
+fn same_line_is_the_library_default_and_unchanged() {
+    assert_eq!(JsFormatOptions::default().brace_style, BraceStyle::SameLine);
     assert_eq!(
-        format_with(FUNCTION_WITH_IF_ELSE, SourceType::mjs(), BraceStyle::OneTbs),
+        format_with(FUNCTION_WITH_IF_ELSE, SourceType::mjs(), BraceStyle::SameLine),
         "function example(value) {\n  if (value) {\n    return true;\n  } else {\n    return false;\n  }\n}\n",
     );
 }
 
 #[test]
-fn allman_puts_function_and_if_else_braces_on_the_next_line() {
+fn next_line_puts_function_and_if_else_braces_on_the_next_line() {
     assert_eq!(
-        format_with(FUNCTION_WITH_IF_ELSE, SourceType::mjs(), BraceStyle::Allman),
+        format_with(FUNCTION_WITH_IF_ELSE, SourceType::mjs(), BraceStyle::NextLine),
         "function example(value)\n{\n  if (value)\n  {\n    return true;\n  }\n  else\n  {\n    return false;\n  }\n}\n",
     );
 }
 
 #[test]
-fn allman_puts_class_and_method_braces_on_the_next_line() {
+fn next_line_puts_class_and_method_braces_on_the_next_line() {
     assert_eq!(
         format_with(
             "class Example { method(value: number) { return value; } }",
             SourceType::ts(),
-            BraceStyle::Allman,
+            BraceStyle::NextLine,
         ),
         "class Example\n{\n  method(value: number)\n  {\n    return value;\n  }\n}\n",
     );
 }
 
 #[test]
-fn allman_puts_try_catch_finally_and_switch_braces_on_the_next_line() {
+fn next_line_puts_try_catch_finally_and_switch_braces_on_the_next_line() {
     assert_eq!(
         format_with(
             "try { a(); } catch (e) { b(); } finally { c(); } switch (x) { case 1: d(); }",
             SourceType::mjs(),
-            BraceStyle::Allman,
+            BraceStyle::NextLine,
         ),
         "try\n{\n  a();\n}\ncatch (e)\n{\n  b();\n}\nfinally\n{\n  c();\n}\nswitch (x)\n{\n  case 1:\n    d();\n}\n",
     );
 }
 
 #[test]
-fn allman_puts_arrow_function_body_braces_on_the_next_line() {
+fn next_line_puts_arrow_function_body_braces_on_the_next_line() {
     assert_eq!(
-        format_with("const f = (a) => { return a; };", SourceType::mjs(), BraceStyle::Allman),
+        format_with("const f = (a) => { return a; };", SourceType::mjs(), BraceStyle::NextLine),
         "const f = (a) =>\n{\n  return a;\n};\n",
     );
 }
 
 #[test]
-fn allman_keeps_returned_object_brace_attached() {
+fn next_line_keeps_returned_object_brace_attached() {
     assert_eq!(
         format_with(
             "function f() { return { enabled: true, other: false, third: 3, fourth: 4, fifth: 555555, sixth: \"a long string\" }; }",
             SourceType::mjs(),
-            BraceStyle::Allman,
+            BraceStyle::NextLine,
         ),
         "function f()\n{\n  return {\n    enabled: true,\n    other: false,\n    third: 3,\n    fourth: 4,\n    fifth: 555555,\n    sixth: \"a long string\",\n  };\n}\n",
     );
 }
 
-fn format_allman_narrow(source_text: &str, source_type: SourceType) -> String {
+fn format_next_line_narrow(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
     let options = JsFormatOptions {
-        brace_style: BraceStyle::Allman,
+        brace_style: BraceStyle::NextLine,
         line_width: oxc_formatter_core::LineWidth::try_from(40).unwrap(),
         ..JsFormatOptions::default()
     };
@@ -83,9 +83,9 @@ fn format_allman_narrow(source_text: &str, source_type: SourceType) -> String {
 }
 
 #[test]
-fn allman_keeps_braces_that_fit_on_one_line_inline() {
+fn next_line_keeps_braces_that_fit_on_one_line_inline() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "import { a } from \"x\";\nconst value = { a: 1 };\nconst { b } = value;\ntype T = { c: string };",
             SourceType::ts(),
         ),
@@ -94,9 +94,9 @@ fn allman_keeps_braces_that_fit_on_one_line_inline() {
 }
 
 #[test]
-fn allman_puts_wrapped_object_braces_on_the_next_line() {
+fn next_line_puts_wrapped_object_braces_on_the_next_line() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "const value = { alpha: 1111111111, nested: { beta: 2222222222, gamma: 3333333333 } };",
             SourceType::mjs(),
         ),
@@ -105,17 +105,20 @@ fn allman_puts_wrapped_object_braces_on_the_next_line() {
 }
 
 #[test]
-fn allman_puts_wrapped_call_argument_object_braces_on_the_next_line() {
+fn next_line_puts_wrapped_call_argument_object_braces_on_the_next_line() {
     assert_eq!(
-        format_allman_narrow("call({ alpha: 1111111111, beta: 2222222222 });", SourceType::mjs()),
+        format_next_line_narrow(
+            "call({ alpha: 1111111111, beta: 2222222222 });",
+            SourceType::mjs()
+        ),
         "call(\n  {\n    alpha: 1111111111,\n    beta: 2222222222,\n  },\n);\n",
     );
 }
 
 #[test]
-fn allman_puts_wrapped_import_braces_on_the_next_line() {
+fn next_line_puts_wrapped_import_braces_on_the_next_line() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "import { alphaaaaaa, betaaaaaaa, gammaaaaa } from \"example\";",
             SourceType::mjs(),
         ),
@@ -124,9 +127,9 @@ fn allman_puts_wrapped_import_braces_on_the_next_line() {
 }
 
 #[test]
-fn allman_puts_wrapped_destructuring_braces_on_the_next_line() {
+fn next_line_puts_wrapped_destructuring_braces_on_the_next_line() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "const { alphaaaaaa, betaaaaaaa, gammaaaaa } = value;",
             SourceType::mjs(),
         ),
@@ -135,9 +138,9 @@ fn allman_puts_wrapped_destructuring_braces_on_the_next_line() {
 }
 
 #[test]
-fn allman_puts_wrapped_type_literal_braces_on_the_next_line() {
+fn next_line_puts_wrapped_type_literal_braces_on_the_next_line() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "type Settings = { enabled: boolean; otherOption: string };",
             SourceType::ts(),
         ),
@@ -146,9 +149,9 @@ fn allman_puts_wrapped_type_literal_braces_on_the_next_line() {
 }
 
 #[test]
-fn allman_keeps_wrapped_parameter_destructuring_hugged() {
+fn next_line_keeps_wrapped_parameter_destructuring_hugged() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "function f({ alphaaaaaa, betaaaaaaa, gammaaaaa }) { a(); }",
             SourceType::mjs(),
         ),
@@ -157,32 +160,23 @@ fn allman_keeps_wrapped_parameter_destructuring_hugged() {
 }
 
 #[test]
-fn allman_keeps_callbacks_hugged() {
+fn next_line_keeps_callbacks_hugged() {
     assert_eq!(
-        format_allman_narrow("foo(() => { a(); }); foo(function () { a(); });", SourceType::mjs()),
+        format_next_line_narrow(
+            "foo(() => { a(); }); foo(function () { a(); });",
+            SourceType::mjs()
+        ),
         "foo(() =>\n{\n  a();\n});\nfoo(function ()\n{\n  a();\n});\n",
     );
 }
 
 #[test]
-fn allman_puts_wrapped_export_braces_on_the_next_line() {
+fn next_line_puts_wrapped_export_braces_on_the_next_line() {
     assert_eq!(
-        format_allman_narrow(
+        format_next_line_narrow(
             "export { alphaaaaaa, betaaaaaaa, gammaaaaa } from \"x\";",
             SourceType::mjs(),
         ),
         "export\n{\n  alphaaaaaa,\n  betaaaaaaa,\n  gammaaaaa,\n} from \"x\";\n",
-    );
-}
-
-#[test]
-fn stroustrup_moves_only_the_keywords_after_a_closing_brace() {
-    assert_eq!(
-        format_with(
-            "if (a) { b(); } else { c(); } try { d(); } catch (e) { f(); } finally { g(); } do { h(); } while (i);",
-            SourceType::mjs(),
-            BraceStyle::Stroustrup,
-        ),
-        "if (a) {\n  b();\n}\nelse {\n  c();\n}\ntry {\n  d();\n}\ncatch (e) {\n  f();\n}\nfinally {\n  g();\n}\ndo {\n  h();\n}\nwhile (i);\n",
     );
 }
