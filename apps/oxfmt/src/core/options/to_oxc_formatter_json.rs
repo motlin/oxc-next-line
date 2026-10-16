@@ -53,7 +53,7 @@ pub fn to_oxc_formatter_json(
             QuotePropsConfig::Preserve => QuoteProps::Preserve,
         };
     }
-    if config.brace_style.is_some_and(BraceStyleConfig::is_next_line) {
+    if BraceStyleConfig::is_next_line(config.brace_style) {
         options.brace_style = BraceStyle::NextLine;
     }
 
@@ -87,14 +87,18 @@ mod tests {
     #[test]
     fn test_brace_style() {
         for (json, expected) in [
-            ("{}", BraceStyle::SameLine),
-            (r#"{"braceStyle": "stroustrup"}"#, BraceStyle::SameLine),
-            (r#"{"braceStyle": "allman"}"#, BraceStyle::NextLine),
+            ("{}", BraceStyle::NextLine),
+            (r#"{"braceStyle": "next-line"}"#, BraceStyle::NextLine),
+            (r#"{"braceStyle": "same-line"}"#, BraceStyle::SameLine),
         ] {
             let config: FormatConfig = serde_json::from_str(json).unwrap();
             let options =
                 to_oxc_formatter_json(&config, CoreFormatOptions::default(), JsonVariant::Json);
             assert_eq!(options.brace_style, expected, "{json}");
+        }
+        for value in ["allman", "1tbs", "stroustrup"] {
+            let json = format!(r#"{{"braceStyle": "{value}"}}"#);
+            assert!(serde_json::from_str::<FormatConfig>(&json).is_err(), "{json}");
         }
     }
 }
