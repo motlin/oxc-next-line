@@ -46,7 +46,7 @@
   },
   "napi": {
     "binaryName": "oxfmt",
-    "packageName": "@oxfmt/binding",
+    "packageName": "oxfmt-next-line-binding",
     "targets": [
       "aarch64-apple-darwin",
       "aarch64-linux-android",
