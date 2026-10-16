@@ -1,29 +1,29 @@
 {
-  "name": "oxfmt",
+  "name": "oxfmt-next-line",
   "version": "0.74.0",
-  "description": "Formatter for the JavaScript Oxidation Compiler",
+  "description": "Oxfmt with opening braces on the next line",
   "keywords": [
+    "braces",
     "formatter",
     "javascript",
+    "next-line",
     "oxc",
     "oxfmt",
     "prettier",
     "typescript"
   ],
-  "homepage": "https://oxc.rs/docs/guide/usage/formatter",
-  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "homepage": "https://github.com/motlin/oxc-next-line/tree/next-line-braces/npm/oxfmt#readme",
+  "bugs": "https://github.com/motlin/oxc-next-line/issues",
   "license": "MIT",
-  "author": "Boshen and oxc contributors",
+  "author": "Craig P. Motlin, Boshen and oxc contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oxc-project/oxc",
+    "url": "git+https://github.com/motlin/oxc-next-line",
     "directory": "npm/oxfmt"
   },
-  "funding": {
-    "url": "https://github.com/sponsors/oxc-project"
-  },
   "bin": {
-    "oxfmt": "bin/oxfmt"
+    "oxfmt": "bin/oxfmt",
+    "oxfmt-next-line": "bin/oxfmt"
   },
   "files": [
     "configuration_schema.json",
@@ -62,7 +62,7 @@
   },
   "napi": {
     "binaryName": "oxfmt",
-    "packageName": "@oxfmt/binding",
+    "packageName": "oxfmt-next-line-binding",
     "targets": [
       "aarch64-apple-darwin",
       "aarch64-linux-android",

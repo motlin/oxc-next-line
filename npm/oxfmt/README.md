@@ -1,57 +1,59 @@
-<p align="center">
-  <br>
-  <br>
-  <a href="https://oxc.rs" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://oxc.rs/oxc-light.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://oxc.rs/oxc-dark.svg">
-      <img alt="Oxc logo" src="https://oxc.rs/oxc-dark.svg" height="60">
-    </picture>
-  </a>
-  <br>
-  <br>
-  <br>
-</p>
+# oxfmt-next-line
 
-<div align="center">
+A fork of [Oxfmt](https://oxc.rs/docs/guide/usage/formatter), the Oxc formatter, that puts opening braces on the next line.
+It is the Oxfmt counterpart of [prettier-next-line](https://www.npmjs.com/package/prettier-next-line).
 
-[![MIT licensed][license-badge]][license-url]
-[![Build Status][ci-badge]][ci-url]
-[![Code Coverage][code-coverage-badge]][code-coverage-url]
+```js
+function example(value)
+{
+  if (value)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
 
-[![Discord chat][discord-badge]][discord-url]
-[![Playground][playground-badge]][playground-url]
+const settings = { enabled: true };
+const wrapped =
+{
+  alpha: 1111111111,
+  beta: 2222222222,
+  gamma: 3333333333,
+  delta: 4444444444,
+};
+```
 
-[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
-[discord-url]: https://discord.gg/9uXCAwqQZW
-[license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-[license-url]: https://github.com/oxc-project/oxc/blob/main/LICENSE
-[ci-badge]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
-[npm-badge]: https://img.shields.io/npm/v/oxfmt/latest?color=brightgreen
-[npm-url]: https://npmx.dev/package/oxfmt/v/latest
-[code-size-badge]: https://img.shields.io/github/languages/code-size/oxc-project/oxc
-[code-size-url]: https://github.com/oxc-project/oxc
-[code-coverage-badge]: https://codecov.io/github/oxc-project/oxc/branch/main/graph/badge.svg
-[code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
-[playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
-[playground-url]: https://playground.oxc.rs/
+Every block's `{` starts its own line, and `else` / `catch` / `finally` start a new line.
+Objects, imports, exports, destructuring and type literals stay inline while they fit and move `{` down once they wrap.
+`return {` stays together, since splitting it would change the program.
+CSS, SCSS, Less, GraphQL and JSON follow the same rule.
 
-</div>
+## Usage
 
-# ⚓ Oxc
+```sh
+npx oxfmt-next-line
+```
 
-The Oxidation Compiler is creating a suite of high-performance tools for JavaScript and TypeScript.
+The package installs both `oxfmt-next-line` and `oxfmt` commands, and reads the usual `.oxfmtrc.json`.
+Everything else works as in [Oxfmt's documentation](https://oxc.rs/docs/guide/usage/formatter).
 
-## Oxfmt
+## Options
 
-This is the formatter for oxc.
+`braceStyle` is the only option this fork adds:
 
-See [usage instructions](https://oxc.rs/docs/guide/usage/formatter).
+- `"next-line"` (default): braces as above.
+- `"same-line"`: Oxfmt's own, Prettier-compatible output.
 
-Run
+```json
+{
+  "braceStyle": "same-line"
+}
+```
 
-- `npx --yes oxfmt@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
-- `npx oxfmt@latest --help` for quick usage instructions.
-- `npx skills add https://github.com/oxc-project/oxc --skill migrate-oxfmt` to install the [`migrate-oxfmt`](https://skills.sh/oxc-project/oxc/migrate-oxfmt) skill, then run `/migrate-oxfmt` to migrate from Prettier or Biome.
-- See also [migrate from Prettier](https://oxc.rs/docs/guide/usage/formatter/migrate-from-prettier.html).
+## Source
+
+[motlin/oxc-next-line](https://github.com/motlin/oxc-next-line), branch `next-line-braces`, replayed onto [oxc-project/oxc](https://github.com/oxc-project/oxc).
+MIT licensed, like Oxc.
