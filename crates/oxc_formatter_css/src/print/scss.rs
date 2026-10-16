@@ -715,7 +715,7 @@ fn write_else_join(else_start: u32, f: &mut CssFormatter<'_, '_>) {
         }
         write!(f, FormatCommentBeforeContent::new(comment, BlockCommentAfter::None));
     }
-    if between.is_empty() {
+    if between.is_empty() && !f.options().brace_style.is_next_line() {
         write!(f, [space(), "@else", space()]);
     } else {
         write!(f, [hard_line_break(), "@else", space()]);

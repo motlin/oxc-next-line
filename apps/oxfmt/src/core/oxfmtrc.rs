@@ -476,6 +476,15 @@ pub enum BraceStyleConfig {
     Allman,
 }
 
+impl BraceStyleConfig {
+    /// Whether `{` goes on a line of its own:
+    /// the only distinction the non-JS languages make, as they have no `else`-like keywords
+    /// (SCSS `@else` follows `{` there).
+    pub fn is_next_line(self) -> bool {
+        matches!(self, Self::Allman)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ObjectWrapConfig {

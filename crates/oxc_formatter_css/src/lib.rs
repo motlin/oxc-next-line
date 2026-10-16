@@ -42,5 +42,5 @@ pub use crate::{
         CssEmbeddedIn, CssRoot, ParsedCss, format, format_to_ir, format_with_session,
         parse_for_format,
     },
-    options::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas},
+    options::{BraceStyle, CssFormatOptions, CssVariant, SingleQuote, TrailingCommas},
 };
