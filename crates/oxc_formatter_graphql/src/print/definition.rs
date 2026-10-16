@@ -242,6 +242,7 @@ fn write_schema_definition<'a>(schema: &'a SchemaDefinition<'a>, f: &mut Graphql
     if let Some(d) = schema.directives.last() {
         flush_trailing_before_literal(to_span(d.span).end, f);
     }
+    common::write_open_brace_break(f);
     write!(f, "{");
     let operation_types = schema.root_operations.as_slice();
     if operation_types.is_empty() {
@@ -263,6 +264,7 @@ fn write_schema_extension<'a>(schema: &'a SchemaExtension<'a>, f: &mut GraphqlFo
         if let Some(d) = schema.directives.last() {
             flush_trailing_before_literal(to_span(d.span).end, f);
         }
+        common::write_open_brace_break(f);
         write!(f, "{");
         write_braced_body(f, operation_types, close_delim_start(schema.span), |i, f| {
             write_root_operation_type_definition(&operation_types[i], f);
@@ -297,6 +299,7 @@ fn write_braced_section<'a, T, F>(
     }
     write!(f, space());
     flush_trailing_comment_before(to_span(list_span).start, f);
+    common::write_open_brace_break(f);
     write!(f, "{");
     write_braced_body(f, items, close_delim_start(list_span), write_item);
 }
