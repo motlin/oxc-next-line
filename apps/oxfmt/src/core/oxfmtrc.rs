@@ -154,18 +154,17 @@ pub struct FormatConfig {
     pub arrow_parens: Option<ArrowParensConfig>,
     /// Where the opening brace of a block, function, class or wrapped object is placed.
     ///
-    /// NOTE: Only `"1tbs"` matches Prettier.
+    /// NOTE: Only `"same-line"` matches Prettier.
     ///
-    /// - `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
-    /// - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
-    /// - `"allman"`: `{` of every block, and of every object, import, export,
-    ///   destructuring or type literal that wraps, goes on a line of its own.
+    /// - `"same-line"`: `{` stays on the same line, and `} else {` shares a line.
+    /// - `"next-line"`: `{` of every block, and of every object, import, export,
+    ///   destructuring or type literal that wraps, goes on a line of its own,
+    ///   and `else` / `catch` / `finally` start a new line.
     ///   In CSS, SCSS, Less and GraphQL every block body's `{` does too,
     ///   and in GraphQL and JSON so does a nested object's that wraps.
-    ///   (`stroustrup` behaves like `1tbs` outside JS and TS.)
     ///
     /// - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, GraphQL, JSON, JSONC, JSON5
-    /// - Default: `"1tbs"`
+    /// - Default: `"next-line"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub brace_style: Option<BraceStyleConfig>,
     /// Print spaces between brackets in object literals.
@@ -470,21 +469,30 @@ pub enum ArrowParensConfig {
     Avoid,
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 pub enum BraceStyleConfig {
-    #[serde(rename = "1tbs")]
-    OneTbs,
-    Stroustrup,
-    Allman,
+    SameLine,
+    #[default]
+    NextLine,
 }
 
 impl BraceStyleConfig {
-    /// Whether `{` goes on a line of its own:
-    /// the only distinction the non-JS languages make, as they have no `else`-like keywords
-    /// (SCSS `@else` follows `{` there).
-    pub fn is_next_line(self) -> bool {
-        matches!(self, Self::Allman)
+    /// The configured style, or the default when unset.
+    pub fn is_next_line(style: Option<Self>) -> bool {
+        static DEFAULT: std::sync::LazyLock<BraceStyleConfig> = std::sync::LazyLock::new(|| {
+            BraceStyleConfig::default_from(std::env::var("OXFMT_TEST_BRACE_STYLE").ok().as_deref())
+        });
+        matches!(style.unwrap_or(*DEFAULT), Self::NextLine)
+    }
+
+    /// `"next-line"`, unless `OXFMT_TEST_BRACE_STYLE` says `"same-line"`:
+    /// upstream's JS tests set that to keep asserting Prettier's output.
+    fn default_from(env: Option<&str>) -> Self {
+        match env {
+            Some("same-line") => Self::SameLine,
+            _ => Self::NextLine,
+        }
     }
 }
 
@@ -1159,5 +1167,27 @@ mod tests_reject_experimental {
         }"#;
         let err = serde_json::from_str::<Oxfmtrc>(json).unwrap_err();
         assert!(err.to_string().contains("experimentalTernaries"));
+    }
+}
+
+#[cfg(test)]
+mod tests_brace_style_default {
+    use super::BraceStyleConfig;
+
+    #[test]
+    fn test_default_brace_style_override() {
+        assert!(matches!(BraceStyleConfig::default_from(None), BraceStyleConfig::NextLine));
+        assert!(matches!(
+            BraceStyleConfig::default_from(Some("same-line")),
+            BraceStyleConfig::SameLine
+        ));
+        assert!(matches!(
+            BraceStyleConfig::default_from(Some("next-line")),
+            BraceStyleConfig::NextLine
+        ));
+        assert!(matches!(
+            BraceStyleConfig::default_from(Some("bogus")),
+            BraceStyleConfig::NextLine
+        ));
     }
 }
