@@ -1,7 +1,7 @@
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
-use oxc_formatter_css::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas};
+use oxc_formatter_css::{BraceStyle, CssFormatOptions, CssVariant, SingleQuote, TrailingCommas};
 
-use super::super::oxfmtrc::{FormatConfig, TrailingCommaConfig};
+use super::super::oxfmtrc::{BraceStyleConfig, FormatConfig, TrailingCommaConfig};
 
 /// Convert `FormatConfig` into `CssFormatOptions` for `oxc_formatter_css`.
 ///
@@ -33,10 +33,33 @@ pub fn to_oxc_formatter_css(
     // [Oxfmt] sortTailwindcss: collect `@apply` classes for batch sorting.
     // The sorter itself is JS-side, so this stays off in the pure Rust build
     // (classes would print as-is anyway, but skipping collection is cheaper).
+    if config.brace_style.is_some_and(BraceStyleConfig::is_next_line) {
+        options.brace_style = BraceStyle::NextLine;
+    }
     #[cfg(feature = "napi")]
     {
         options.sort_tailwindcss = config.is_tailwind_enabled();
     }
 
     options
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_brace_style() {
+        for (json, expected) in [
+            ("{}", BraceStyle::SameLine),
+            (r#"{"braceStyle": "1tbs"}"#, BraceStyle::SameLine),
+            (r#"{"braceStyle": "stroustrup"}"#, BraceStyle::SameLine),
+            (r#"{"braceStyle": "allman"}"#, BraceStyle::NextLine),
+        ] {
+            let config: FormatConfig = serde_json::from_str(json).unwrap();
+            let options =
+                to_oxc_formatter_css(&config, CoreFormatOptions::default(), CssVariant::Css);
+            assert_eq!(options.brace_style, expected, "{json}");
+        }
+    }
 }
