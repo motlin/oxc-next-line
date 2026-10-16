@@ -78,9 +78,8 @@ pub fn to_oxc_formatter(
     // [Oxfmt] braceStyle: "1tbs" | "stroustrup" | "allman"
     if let Some(style) = config.brace_style {
         format_options.brace_style = match style {
-            BraceStyleConfig::OneTbs => BraceStyle::OneTbs,
-            BraceStyleConfig::Stroustrup => BraceStyle::Stroustrup,
-            BraceStyleConfig::Allman => BraceStyle::Allman,
+            BraceStyleConfig::OneTbs | BraceStyleConfig::Stroustrup => BraceStyle::SameLine,
+            BraceStyleConfig::Allman => BraceStyle::NextLine,
         };
     }
 
@@ -442,12 +441,12 @@ mod tests {
     #[test]
     fn test_brace_style() {
         let config: FormatConfig = serde_json::from_str("{}").unwrap();
-        assert_eq!(build(&config).unwrap().brace_style, BraceStyle::OneTbs);
+        assert_eq!(build(&config).unwrap().brace_style, BraceStyle::SameLine);
 
         for (value, expected) in [
-            ("1tbs", BraceStyle::OneTbs),
-            ("stroustrup", BraceStyle::Stroustrup),
-            ("allman", BraceStyle::Allman),
+            ("1tbs", BraceStyle::SameLine),
+            ("stroustrup", BraceStyle::SameLine),
+            ("allman", BraceStyle::NextLine),
         ] {
             let config: FormatConfig =
                 serde_json::from_str(&format!(r#"{{"braceStyle": "{value}"}}"#)).unwrap();

@@ -36,7 +36,7 @@ pub struct JsFormatOptions {
     pub semicolons: Semicolons,
     /// Whether to add non-necessary parentheses to arrow functions. Defaults to "always".
     pub arrow_parentheses: ArrowParentheses,
-    /// Where the opening brace of a block-like construct is placed. Defaults to "1tbs".
+    /// Where the opening brace of a block-like construct is placed. Defaults to "same-line".
     pub brace_style: BraceStyle,
     /// Whether to insert spaces around brackets in object literals. Defaults to true.
     pub bracket_spacing: BracketSpacing,
@@ -473,30 +473,21 @@ impl fmt::Display for ArrowParentheses {
 
 /// Where the opening brace of a block-like construct is placed.
 ///
-/// Mirrors `@stylistic/brace-style`. Only [`BraceStyle::OneTbs`] is Prettier-compatible.
+/// Only [`BraceStyle::SameLine`] is Prettier-compatible.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum BraceStyle {
     /// Prettier's behavior: `{` stays on the line that introduced the block,
     /// and `else` / `catch` / `finally` share a line with `}`.
     #[default]
-    OneTbs,
-    /// Like [`BraceStyle::OneTbs`], except that `else` / `catch` / `finally`
-    /// (and the `while` of a `do...while`) start a new line.
-    Stroustrup,
-    /// Every opening brace of a block goes on a line of its own.
-    Allman,
+    SameLine,
+    /// Every opening brace of a block, and of a wrapped object-like, goes on a line of its own,
+    /// and `else` / `catch` / `finally` (and the `while` of a `do...while`) start a new line.
+    NextLine,
 }
 
 impl BraceStyle {
-    /// Whether the opening brace is preceded by a line break instead of a space.
-    pub const fn breaks_before_open_brace(self) -> bool {
-        matches!(self, Self::Allman)
-    }
-
-    /// Whether `else` / `catch` / `finally` / `while` start on their own line
-    /// rather than sharing one with the preceding `}`.
-    pub const fn breaks_before_keyword(self) -> bool {
-        matches!(self, Self::Stroustrup | Self::Allman)
+    pub const fn is_next_line(self) -> bool {
+        matches!(self, Self::NextLine)
     }
 }
 
@@ -505,11 +496,10 @@ impl FromStr for BraceStyle {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "1tbs" => Ok(Self::OneTbs),
-            "stroustrup" => Ok(Self::Stroustrup),
-            "allman" => Ok(Self::Allman),
+            "same-line" => Ok(Self::SameLine),
+            "next-line" => Ok(Self::NextLine),
             _ => Err(
-                "Value not supported for Brace style. Supported values are '1tbs', 'stroustrup' and 'allman'.",
+                "Value not supported for Brace style. Supported values are 'same-line' and 'next-line'.",
             ),
         }
     }
@@ -518,9 +508,8 @@ impl FromStr for BraceStyle {
 impl fmt::Display for BraceStyle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            BraceStyle::OneTbs => "1tbs",
-            BraceStyle::Stroustrup => "stroustrup",
-            BraceStyle::Allman => "allman",
+            BraceStyle::SameLine => "same-line",
+            BraceStyle::NextLine => "next-line",
         })
     }
 }

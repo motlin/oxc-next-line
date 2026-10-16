@@ -117,7 +117,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         if break_properties {
             ObjectPatternLayout::Group { expand: true }
         } else if self.is_in_assignment_like() {
-            if f.options().brace_style.breaks_before_open_brace() {
+            if f.options().brace_style.is_next_line() {
                 ObjectPatternLayout::AssignmentLeft
             } else {
                 ObjectPatternLayout::Inline
@@ -182,9 +182,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
             ObjectPatternLayout::AssignmentLeft => {
                 write!(f, [soft_line_break(), "{", format_properties, "}"]);
             }
-            ObjectPatternLayout::Group { expand }
-                if f.options().brace_style.breaks_before_open_brace() =>
-            {
+            ObjectPatternLayout::Group { expand } if f.options().brace_style.is_next_line() => {
                 // The leading break shares the properties' group,
                 // so `{` moves to its own line exactly when the pattern wraps.
                 write!(
@@ -216,7 +214,7 @@ enum ObjectPatternLayout {
     /// if the pattern is the left side of an assignment.
     Inline,
 
-    /// [`ObjectPatternLayout::Inline`] for the left side of an assignment under Allman:
+    /// [`ObjectPatternLayout::Inline`] for the left side of an assignment under next-line braces:
     /// the `{` also moves to its own line when the assignment's group breaks the properties.
     AssignmentLeft,
 }
