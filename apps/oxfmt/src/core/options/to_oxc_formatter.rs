@@ -75,13 +75,12 @@ pub fn to_oxc_formatter(
         };
     }
 
-    // [Oxfmt] braceStyle: "1tbs" | "stroustrup" | "allman"
-    if let Some(style) = config.brace_style {
-        format_options.brace_style = match style {
-            BraceStyleConfig::OneTbs | BraceStyleConfig::Stroustrup => BraceStyle::SameLine,
-            BraceStyleConfig::Allman => BraceStyle::NextLine,
-        };
-    }
+    // [Oxfmt] braceStyle: "same-line" | "next-line"
+    format_options.brace_style = if BraceStyleConfig::is_next_line(config.brace_style) {
+        BraceStyle::NextLine
+    } else {
+        BraceStyle::SameLine
+    };
 
     // [Prettier] bracketSpacing: boolean
     if let Some(spacing) = config.bracket_spacing {
@@ -441,19 +440,20 @@ mod tests {
     #[test]
     fn test_brace_style() {
         let config: FormatConfig = serde_json::from_str("{}").unwrap();
-        assert_eq!(build(&config).unwrap().brace_style, BraceStyle::SameLine);
+        assert_eq!(build(&config).unwrap().brace_style, BraceStyle::NextLine);
 
-        for (value, expected) in [
-            ("1tbs", BraceStyle::SameLine),
-            ("stroustrup", BraceStyle::SameLine),
-            ("allman", BraceStyle::NextLine),
-        ] {
+        for (value, expected) in
+            [("same-line", BraceStyle::SameLine), ("next-line", BraceStyle::NextLine)]
+        {
             let config: FormatConfig =
                 serde_json::from_str(&format!(r#"{{"braceStyle": "{value}"}}"#)).unwrap();
             assert_eq!(build(&config).unwrap().brace_style, expected);
         }
 
-        assert!(serde_json::from_str::<FormatConfig>(r#"{"braceStyle": "next-line"}"#).is_err());
+        for value in ["allman", "1tbs", "stroustrup"] {
+            let json = format!(r#"{{"braceStyle": "{value}"}}"#);
+            assert!(serde_json::from_str::<FormatConfig>(&json).is_err(), "{json}");
+        }
     }
 
     #[test]
