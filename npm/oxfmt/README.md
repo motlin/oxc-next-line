@@ -55,5 +55,5 @@ Everything else works as in [Oxfmt's documentation](https://oxc.rs/docs/guide/us
 
 ## Source
 
-[motlin/oxc-next-line](https://github.com/motlin/oxc-next-line), branch `next-line-braces`, replayed onto [oxc-project/oxc](https://github.com/oxc-project/oxc).
+[motlin/oxc-next-line](https://github.com/motlin/oxc-next-line), whose `main` branch replays the brace changes onto [oxc-project/oxc](https://github.com/oxc-project/oxc).
 MIT licensed, like Oxc.
