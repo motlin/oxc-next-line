@@ -33,7 +33,7 @@ export type Language =
   | "mdx";
 export type AstroUserConfig = boolean | AstroConfig;
 export type AstroCompressHtmlConfig = "jsx" | "html" | "none";
-export type BraceStyleConfig = "1tbs" | "stroustrup" | "allman";
+export type BraceStyleConfig = "same-line" | "next-line";
 export type EmbeddedLanguageFormattingConfig = "auto" | "off";
 export type EndOfLineConfig = "lf" | "crlf" | "cr";
 export type OperatorPositionConfig = "start" | "end";
@@ -110,18 +110,17 @@ export interface Oxfmtrc {
   /**
    * Where the opening brace of a block, function, class or wrapped object is placed.
    *
-   * NOTE: Only `"1tbs"` matches Prettier.
+   * NOTE: Only `"same-line"` matches Prettier.
    *
-   * - `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
-   * - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
-   * - `"allman"`: `{` of every block, and of every object, import, export,
-   * destructuring or type literal that wraps, goes on a line of its own.
+   * - `"same-line"`: `{` stays on the same line, and `} else {` shares a line.
+   * - `"next-line"`: `{` of every block, and of every object, import, export,
+   * destructuring or type literal that wraps, goes on a line of its own,
+   * and `else` / `catch` / `finally` start a new line.
    * In CSS, SCSS, Less and GraphQL every block body's `{` does too,
    * and in GraphQL and JSON so does a nested object's that wraps.
-   * (`stroustrup` behaves like `1tbs` outside JS and TS.)
    *
    * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, GraphQL, JSON, JSONC, JSON5
-   * - Default: `"1tbs"`
+   * - Default: `"next-line"`
    */
   braceStyle?: BraceStyleConfig;
   /**
@@ -526,18 +525,17 @@ export interface FormatConfig {
   /**
    * Where the opening brace of a block, function, class or wrapped object is placed.
    *
-   * NOTE: Only `"1tbs"` matches Prettier.
+   * NOTE: Only `"same-line"` matches Prettier.
    *
-   * - `"1tbs"`: `{` stays on the same line, and `} else {` shares a line.
-   * - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
-   * - `"allman"`: `{` of every block, and of every object, import, export,
-   * destructuring or type literal that wraps, goes on a line of its own.
+   * - `"same-line"`: `{` stays on the same line, and `} else {` shares a line.
+   * - `"next-line"`: `{` of every block, and of every object, import, export,
+   * destructuring or type literal that wraps, goes on a line of its own,
+   * and `else` / `catch` / `finally` start a new line.
    * In CSS, SCSS, Less and GraphQL every block body's `{` does too,
    * and in GraphQL and JSON so does a nested object's that wraps.
-   * (`stroustrup` behaves like `1tbs` outside JS and TS.)
    *
    * - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, GraphQL, JSON, JSONC, JSON5
-   * - Default: `"1tbs"`
+   * - Default: `"next-line"`
    */
   braceStyle?: BraceStyleConfig;
   /**
