@@ -142,9 +142,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
 
             if should_hug {
                 write!(f, ["{", inner, "}"]);
-            } else if f.options().brace_style.breaks_before_open_brace()
-                && !self.brace_break_is_unsafe()
-            {
+            } else if f.options().brace_style.is_next_line() && !self.brace_break_is_unsafe() {
                 // The leading break shares the members' group,
                 // so `{` moves to its own line exactly when the object wraps.
                 write!(

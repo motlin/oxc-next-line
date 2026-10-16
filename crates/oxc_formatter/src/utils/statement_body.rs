@@ -48,7 +48,7 @@ pub fn write_head_body_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
 }
 
 /// [`write_head_body_separator`] for a body that opens with `{`:
-/// under [`BraceStyle::Allman`](crate::BraceStyle::Allman) the `{` then starts its own line.
+/// under [`BraceStyle::NextLine`](crate::BraceStyle::NextLine) the `{` then starts its own line.
 /// A break already written by a head-side line comment is not doubled:
 /// the printer skips a line break while the line is still empty.
 pub fn write_head_brace_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) {
@@ -56,18 +56,18 @@ pub fn write_head_brace_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) 
     write_open_brace_break(f);
 }
 
-/// The line break before a `{` under [`BraceStyle::Allman`](crate::BraceStyle::Allman), nothing otherwise.
+/// The line break before a `{` under [`BraceStyle::NextLine`](crate::BraceStyle::NextLine), nothing otherwise.
 /// For a `{` not preceded by [`write_head_brace_separator`]; a pending `space()` is dropped at the line start.
 pub fn write_open_brace_break(f: &mut JsFormatter<'_, '_>) {
-    if f.options().brace_style.breaks_before_open_brace() {
+    if f.options().brace_style.is_next_line() {
         write!(f, hard_line_break());
     }
 }
 
 /// The default separator between a block's `}` and a following `else`/`catch`/`finally`/`while`:
-/// a space under [`BraceStyle::OneTbs`](crate::BraceStyle::OneTbs), a line break otherwise.
+/// a space under [`BraceStyle::SameLine`](crate::BraceStyle::SameLine), a line break otherwise.
 pub fn write_brace_keyword_separator(f: &mut JsFormatter<'_, '_>) {
-    if f.options().brace_style.breaks_before_keyword() {
+    if f.options().brace_style.is_next_line() {
         write!(f, hard_line_break());
     } else {
         write!(f, space());

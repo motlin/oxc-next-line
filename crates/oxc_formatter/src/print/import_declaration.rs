@@ -20,13 +20,13 @@ use crate::{
 use super::FormatWrite;
 
 /// Writes `{ specifiers }` of an import or export as one group.
-/// Under Allman the leading break shares that group,
+/// Under next-line braces the leading break shares that group,
 /// so `{` moves to its own line exactly when the specifiers wrap.
 pub(super) fn write_specifiers_group<'a>(
     specifiers: &impl Format<'a, JsFormatContext<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    if f.options().brace_style.breaks_before_open_brace() {
+    if f.options().brace_style.is_next_line() {
         write!(f, group(&format_args!(soft_line_break(), "{", specifiers, "}")));
     } else {
         write!(f, ["{", group(specifiers), "}"]);
