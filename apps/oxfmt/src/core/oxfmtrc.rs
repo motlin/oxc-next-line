@@ -160,8 +160,11 @@ pub struct FormatConfig {
     /// - `"stroustrup"`: like `"1tbs"`, but `else` / `catch` / `finally` start a new line.
     /// - `"allman"`: `{` of every block, and of every object, import, export,
     ///   destructuring or type literal that wraps, goes on a line of its own.
+    ///   In CSS, SCSS, Less and GraphQL every block body's `{` does too,
+    ///   and in GraphQL and JSON so does a nested object's that wraps.
+    ///   (`stroustrup` behaves like `1tbs` outside JS and TS.)
     ///
-    /// - Languages: JS, JSX, TS, TSX
+    /// - Languages: JS, JSX, TS, TSX, CSS, SCSS, Less, GraphQL, JSON, JSONC, JSON5
     /// - Default: `"1tbs"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub brace_style: Option<BraceStyleConfig>,
