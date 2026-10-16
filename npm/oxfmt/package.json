@@ -12,7 +12,7 @@
     "prettier",
     "typescript"
   ],
-  "homepage": "https://github.com/motlin/oxc-next-line/tree/next-line-braces/npm/oxfmt#readme",
+  "homepage": "https://github.com/motlin/oxc-next-line/tree/main/npm/oxfmt#readme",
   "bugs": "https://github.com/motlin/oxc-next-line/issues",
   "license": "MIT",
   "author": "Craig P. Motlin, Boshen and oxc contributors",
