@@ -578,6 +578,10 @@ pub(super) fn write_terminator_tail_comments(content_end: u32, f: &mut CssFormat
 /// Prints a `--prop: { a: b; c: d }` rule-block value by re-flowing the raw text:
 /// one declaration per line, normalized `prop: value;` spacing.
 fn write_custom_property_block<'a>(value_text: &'a str, f: &mut CssFormatter<'_, 'a>) {
+    // A pending `space()` after the colon is dropped at the line start
+    if f.options().brace_style.is_next_line() {
+        write!(f, hard_line_break());
+    }
     let inner = value_text.trim_end();
     let inner = &inner[1..inner.len() - 1];
     // Split on `;`, keeping a comment that follows a `;` on the SAME line
@@ -711,6 +715,10 @@ pub(super) fn write_block<'a>(block: &SimpleBlock<'a>, f: &mut CssFormatter<'_, 
     let block_span = to_span(&block.span);
     let r_curly = block_span.end.saturating_sub(1);
 
+    // A pending `space()` from the caller is dropped at the line start
+    if f.options().brace_style.is_next_line() {
+        write!(f, hard_line_break());
+    }
     write!(f, "{");
 
     if block.statements.is_empty() {
