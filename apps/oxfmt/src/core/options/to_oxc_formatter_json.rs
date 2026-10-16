@@ -1,10 +1,10 @@
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 use oxc_formatter_json::{
-    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
+    BraceStyle, BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
 };
 
 use super::super::oxfmtrc::{
-    FormatConfig, ObjectWrapConfig, QuotePropsConfig, SortPackageJsonConfig,
+    BraceStyleConfig, FormatConfig, ObjectWrapConfig, QuotePropsConfig, SortPackageJsonConfig,
     SortPackageJsonUserConfig, TrailingCommaConfig,
 };
 
@@ -53,6 +53,9 @@ pub fn to_oxc_formatter_json(
             QuotePropsConfig::Preserve => QuoteProps::Preserve,
         };
     }
+    if config.brace_style.is_some_and(BraceStyleConfig::is_next_line) {
+        options.brace_style = BraceStyle::NextLine;
+    }
 
     options
 }
@@ -75,4 +78,23 @@ pub fn to_sort_package_json(config: &FormatConfig) -> Option<sort_package_json::
             // Small optimization: `oxc_formatter_json` will reformat anyway
             .with_pretty(false),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_brace_style() {
+        for (json, expected) in [
+            ("{}", BraceStyle::SameLine),
+            (r#"{"braceStyle": "stroustrup"}"#, BraceStyle::SameLine),
+            (r#"{"braceStyle": "allman"}"#, BraceStyle::NextLine),
+        ] {
+            let config: FormatConfig = serde_json::from_str(json).unwrap();
+            let options =
+                to_oxc_formatter_json(&config, CoreFormatOptions::default(), JsonVariant::Json);
+            assert_eq!(options.brace_style, expected, "{json}");
+        }
+    }
 }

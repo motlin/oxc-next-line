@@ -49,6 +49,24 @@ pub struct JsonFormatOptions {
     pub single_quote: SingleQuote,
     // Used by: JSON5
     pub quote_props: QuoteProps,
+    // Used by: JSON, JSONC, JSON5, JSON-stringify
+    pub brace_style: BraceStyle,
+}
+
+/// Where an object's opening `{` is placed.
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+pub enum BraceStyle {
+    /// Prettier's behavior: `{` follows the property key on the same line.
+    #[default]
+    SameLine,
+    /// The `{` of a nested object that wraps starts its own line.
+    NextLine,
+}
+
+impl BraceStyle {
+    pub fn is_next_line(self) -> bool {
+        matches!(self, Self::NextLine)
+    }
 }
 
 impl JsonFormatOptions {

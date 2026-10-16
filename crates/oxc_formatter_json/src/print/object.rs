@@ -3,7 +3,8 @@ use oxc_ast::ast::{
 };
 use oxc_formatter_core::{
     Format, FormatContext, arena_cow_str,
-    builders::{group, soft_block_indent_with_maybe_space, space, text},
+    builders::{group, soft_block_indent_with_maybe_space, soft_line_break, space, text},
+    format_args,
     spec::{format_trimmed_number, is_simple_number, normalize_string},
     write,
 };
@@ -32,9 +33,8 @@ pub struct FmtJsonObject<'a, 'b> {
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        write!(f, "{");
-
         if self.object.properties.is_empty() {
+            write!(f, "{");
             let dangling = f.context().comments().take_before(self.object.span.end);
             write_empty_container_comments(dangling, f);
             write!(f, "}");
@@ -105,17 +105,19 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
             }
             Expand::Never => false,
         };
-        write!(
-            f,
-            [
-                group(&soft_block_indent_with_maybe_space(
-                    &properties,
-                    options.bracket_spacing.value(),
-                ))
-                .should_expand(expand),
-                "}"
-            ]
-        );
+        let inner =
+            soft_block_indent_with_maybe_space(&properties, options.bracket_spacing.value());
+        if options.brace_style.is_next_line() {
+            // The leading break shares the properties' group,
+            // so `{` moves to its own line exactly when the object wraps;
+            // at the start of a line (top level, array element) the break is skipped.
+            write!(
+                f,
+                group(&format_args!(soft_line_break(), "{", inner, "}")).should_expand(expand)
+            );
+        } else {
+            write!(f, ["{", group(&inner).should_expand(expand), "}"]);
+        }
     }
 }
 
