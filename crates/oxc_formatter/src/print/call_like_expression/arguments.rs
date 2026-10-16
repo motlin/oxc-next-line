@@ -550,8 +550,8 @@ fn can_group_expression_argument(argument: &Expression<'_>, f: &JsFormatter<'_, 
     match argument {
         Expression::ObjectExpression(object_expression) => {
             // A hugged object would print `call(\n{` once its `{` moves to its own line,
-            // so under Allman a wrapping object breaks the arguments instead.
-            !f.options().brace_style.breaks_before_open_brace()
+            // so under next-line braces a wrapping object breaks the arguments instead.
+            !f.options().brace_style.is_next_line()
                 && (!object_expression.properties.is_empty()
                     || f.comments().has_comment_in_span(object_expression.span))
         }
