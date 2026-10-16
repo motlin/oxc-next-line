@@ -12,7 +12,7 @@ use oxc_ast::ast::{
     ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
 };
 use oxc_formatter_core::{
-    Format, arena_cow_str,
+    Format, FormatContext, arena_cow_str,
     builders::{block_indent, hard_line_break, space, text},
     write,
 };
@@ -117,11 +117,16 @@ fn write_array<'a>(array: &ArrayExpression<'a>, f: &mut JsonFormatter<'_, 'a>) {
 
 /// `{` + one `key: value` per line + `}`.
 fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>) {
-    write!(f, "{");
     if object.properties.is_empty() {
-        write!(f, "}");
+        write!(f, "{}");
         return;
     }
+
+    // Skipped at the start of a line (top level, array element)
+    if f.context().options().brace_style.is_next_line() {
+        write!(f, hard_line_break());
+    }
+    write!(f, "{");
 
     write_hard_broken_entries(f, object.properties.len(), |i, f| match &object.properties[i] {
         ObjectPropertyKind::ObjectProperty(prop) => {
