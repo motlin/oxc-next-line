@@ -51,6 +51,8 @@ pub struct CssFormatOptions {
     // and travel separately via the host(Oxfmt)'s options payload, not through this struct.
     // `oxc_formatter_css` only needs to know whether to collect `@apply` classes.
     pub sort_tailwindcss: bool,
+    // Used by: CSS, SCSS, Less
+    pub brace_style: BraceStyle,
 }
 
 impl CssFormatOptions {
@@ -115,6 +117,22 @@ impl SingleQuote {
 impl From<bool> for SingleQuote {
     fn from(value: bool) -> Self {
         Self(value)
+    }
+}
+
+/// Where the opening `{` of a block is placed.
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+pub enum BraceStyle {
+    /// Prettier's behavior: `{` ends the line of the selector or at-rule prelude.
+    #[default]
+    SameLine,
+    /// `{` starts a line of its own.
+    NextLine,
+}
+
+impl BraceStyle {
+    pub fn is_next_line(self) -> bool {
+        matches!(self, Self::NextLine)
     }
 }
 
