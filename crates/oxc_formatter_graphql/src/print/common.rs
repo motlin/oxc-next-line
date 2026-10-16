@@ -2,7 +2,7 @@
 //! variable definitions, types, and input value definitions.
 
 use oxc_formatter_core::{
-    Format,
+    Format, FormatContext,
     builders::{
         block_indent, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,
@@ -24,6 +24,14 @@ use super::{
     span::{Spanned, close_delim_start, next_token_start_after, to_span},
     string, value, write_sequence,
 };
+
+/// The line break before an always-multi-line body's `{` under [`BraceStyle::NextLine`](crate::BraceStyle::NextLine).
+/// A pending `space()` is dropped at the line start.
+pub(super) fn write_open_brace_break(f: &mut GraphqlFormatter<'_, '_>) {
+    if f.context().options().brace_style.is_next_line() {
+        write!(f, hard_line_break());
+    }
+}
 
 pub(super) fn write_name<'a>(name: &Name<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     flush_leading_comments(to_span(name.span).start, f);
@@ -193,7 +201,8 @@ pub(super) fn write_arguments<'a>(
         let argument = &items[i];
         write_name(&argument.name, f);
         flush_trailing_before_literal(to_span(argument.name.span).end, f);
-        write!(f, ": ");
+        // `space()`, not `" "`: a next-line object value's break drops it
+        write!(f, [":", space()]);
         if let Some(v) = argument.value.as_ref() {
             value::write_value(v, f);
         }
@@ -242,7 +251,9 @@ fn write_default_value<'a>(
 ) {
     let Some(default_value) = default_value else { return };
     // The node's span starts at the `=`
-    write_spaced_keyword(to_span(default_value.span).start, "= ", f);
+    write_spaced_keyword(to_span(default_value.span).start, "=", f);
+    // `space()`, not `" "`: a next-line object value's break drops it
+    write!(f, space());
     value::write_value(&default_value.value, f);
 }
 
