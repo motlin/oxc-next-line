@@ -6,8 +6,12 @@ use super::{
     FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,
 };
 use crate::{
-    ast_nodes::AstNode, format_args, formatter::prelude::*, print::semicolon::OptionalSemicolon,
-    utils::statement_body::write_head_brace_separator, write,
+    ast_nodes::AstNode,
+    format_args,
+    formatter::prelude::*,
+    print::semicolon::OptionalSemicolon,
+    utils::statement_body::{write_empty_brace_content, write_head_brace_separator},
+    write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Function<'a>> {
@@ -121,7 +125,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FunctionBody<'a>> {
         let statements = self.statements();
         let directives = self.directives();
         if is_empty_block(&statements) && directives.is_empty() {
-            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
+            write!(f, "{");
+            write_empty_brace_content(self.span, f);
+            write!(f, "}");
         } else {
             write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"]);
         }

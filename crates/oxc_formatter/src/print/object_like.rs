@@ -13,6 +13,7 @@ use crate::{
     },
     options::Expand,
     print::parameters::{get_this_param, should_hug_function_parameters},
+    utils::statement_body::write_empty_brace_content,
     write,
 };
 
@@ -98,6 +99,26 @@ impl<'a> ObjectLike<'a, '_> {
         false
     }
 
+    /// Whether an empty object-like moves its `{` onto its own line, as prettier-next-line does:
+    /// a type literal always, and an object literal only as the value of an assignment, a default,
+    /// a property, or a class field (`x =` then `{`), so `f({})` and `return {` keep it attached.
+    fn empty_breaks_before_brace(&self) -> bool {
+        match self {
+            Self::TSTypeLiteral(_) => true,
+            Self::ObjectExpression(object) => matches!(
+                object.parent(),
+                AstNodes::AssignmentExpression(_)
+                    | AstNodes::AssignmentPattern(_)
+                    | AstNodes::AssignmentTargetWithDefault(_)
+                    | AstNodes::AssignmentTargetPropertyIdentifier(_)
+                    | AstNodes::FormalParameter(_)
+                    | AstNodes::ObjectProperty(_)
+                    | AstNodes::PropertyDefinition(_)
+                    | AstNodes::VariableDeclarator(_)
+            ),
+        }
+    }
+
     fn members_are_empty(&self) -> bool {
         match self {
             Self::ObjectExpression(o) => o.properties().is_empty(),
@@ -117,7 +138,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 
-        if self.members_are_empty() {
+        if self.members_are_empty() && f.options().brace_style.is_next_line() {
+            // prettier-next-line always splits an empty object onto two lines
+            let content = format_with(|f| write_empty_brace_content(self.span(), f));
+            if self.empty_breaks_before_brace() {
+                write!(f, group(&format_args!(soft_line_break(), "{", content, "}")));
+            } else {
+                write!(f, ["{", content, "}"]);
+            }
+        } else if self.members_are_empty() {
             // Soft indent so the object can stay on one line if it fits:
             // a single one-line block comment stays inline without bracket spacing
             // line comments and multiple comments still expand.

@@ -10,7 +10,7 @@ use crate::{
         prelude::{format_with, group, soft_block_indent_with_maybe_space, soft_line_break},
         trivia::format_dangling_comments,
     },
-    utils::object::should_preserve_quote,
+    utils::{object::should_preserve_quote, statement_body::write_empty_brace_content},
     write,
 };
 
@@ -54,6 +54,10 @@ impl<'a> ObjectPatternLike<'a, '_> {
             },
             Self::ObjectAssignmentTarget(_) => false,
         }
+    }
+
+    fn is_catch_parameter(&self) -> bool {
+        matches!(self, Self::ObjectPattern(node) if matches!(node.parent(), AstNodes::CatchParameter(_)))
     }
 
     /// Based on <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L77-L103>
@@ -170,6 +174,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
         });
 
         match self.layout(f) {
+            ObjectPatternLayout::Empty if f.options().brace_style.is_next_line() => {
+                // prettier-next-line always splits an empty pattern onto two lines,
+                // breaking before the `{` unless the pattern is a parameter: `catch ({` then `})`.
+                let content = format_with(|f| write_empty_brace_content(self.span(), f));
+                if self.is_inline(f) || self.is_catch_parameter() {
+                    write!(f, ["{", content, "}"]);
+                } else {
+                    write!(f, group(&format_args!(soft_line_break(), "{", content, "}")));
+                }
+            }
             ObjectPatternLayout::Empty => {
                 write!(
                     f,

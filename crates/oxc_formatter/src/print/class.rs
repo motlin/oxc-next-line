@@ -35,7 +35,9 @@ use crate::{
         },
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
-        statement_body::{write_head_brace_separator, write_open_brace_break},
+        statement_body::{
+            write_empty_brace_content, write_head_brace_separator, write_open_brace_break,
+        },
         suppressed::write_suppressed_content,
     },
     write,
@@ -178,7 +180,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StaticBlock<'a>> {
         write!(f, "{");
 
         if is_empty_block(&self.body) {
-            write!(f, [format_dangling_comments(self.span).with_block_indent()]);
+            write_empty_brace_content(self.span, f);
         } else {
             write!(f, [block_indent(&self.body())]);
         }
@@ -475,7 +477,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         write_head_brace_separator(self.body.span.start, f);
 
         if body.body.is_empty() {
-            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
+            write!(f, "{");
+            write_empty_brace_content(self.span, f);
+            write!(f, "}");
         } else {
             body.fmt(f);
         }

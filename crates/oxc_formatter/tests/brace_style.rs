@@ -214,3 +214,78 @@ fn next_line_is_idempotent_with_a_block_comment_before_an_arrow_body_brace_in_a_
         "call(() /**/ =>\n  //\n  () /**/ =>\n  /**/\n  () /**/ => /**/\n  {\n    //\n  },\n);\n",
     );
 }
+
+#[test]
+fn next_line_splits_empty_function_and_arrow_bodies() {
+    assert_next_line_is_idempotent(
+        "const f = () => {};\nconst h = (a, b) => {};\nconst g = function () {};\nitems.forEach(function () {});\nfunction noop() {}\nasync function* gen() {}\nexport default function () {}\n",
+        SourceType::mjs(),
+        "const f = () =>\n{\n};\nconst h = (a, b) =>\n{\n};\nconst g = function ()\n{\n};\nitems.forEach(function ()\n{\n});\nfunction noop()\n{\n}\nasync function* gen()\n{\n}\nexport default function ()\n{\n}\n",
+    );
+}
+
+#[test]
+fn next_line_splits_empty_arrow_call_arguments() {
+    assert_next_line_is_idempotent(
+        "Event.debounce(call(A, B), DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD)(() => {});\nfoo(() => {});\nfoo(a, b, () => {});\nnew Promise(() => {});\nconst fnArg = useCallback(() => {}, []);\nx.then(() => {}, () => {});\n",
+        SourceType::mjs(),
+        "Event.debounce(\n  call(A, B),\n  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD,\n)(() =>\n{\n},\n);\nfoo(() =>\n{\n},\n);\nfoo(a, b, () =>\n{\n},\n);\nnew Promise(() =>\n{\n},\n);\nconst fnArg = useCallback(() =>\n{\n}, []);\nx.then(\n  () =>\n  {\n  },\n  () =>\n  {\n  },\n);\n",
+    );
+}
+
+#[test]
+fn next_line_splits_empty_class_bodies_and_members() {
+    assert_next_line_is_idempotent(
+        "class Empty {}\nclass A extends B {}\nclass WithEmpty { method() {} constructor() {} get x() {} static {} }\nconst obj = { m() {} };\nexport default class {}\n",
+        SourceType::mjs(),
+        "class Empty\n{\n}\nclass A extends B\n{\n}\nclass WithEmpty\n{\n  method()\n  {\n  }\n  constructor()\n  {\n  }\n  get x()\n  {\n  }\n  static\n  {\n  }\n}\nconst obj =\n{\n  m()\n  {\n  },\n};\nexport default class\n{\n}\n",
+    );
+}
+
+#[test]
+fn next_line_splits_empty_statement_blocks() {
+    assert_next_line_is_idempotent(
+        "if (x) {}\nif (x) {} else {}\nfor (;;) {}\nwhile (x) {}\ndo {} while (x);\ntry { f(); } catch {}\ntry { f(); } catch (e) {} finally {}\nswitch (x) {}\n{}\nlabel: {}\n",
+        SourceType::mjs(),
+        "if (x)\n{\n}\nif (x)\n{\n}\nelse\n{\n}\nfor (;;)\n{\n}\nwhile (x)\n{\n}\ndo\n{\n}\nwhile (x);\ntry\n{\n  f();\n}\ncatch\n{\n}\ntry\n{\n  f();\n}\ncatch (e)\n{\n}\nfinally\n{\n}\nswitch (x)\n{\n}\n{\n}\nlabel:\n{\n}\n",
+    );
+}
+
+#[test]
+fn next_line_splits_empty_typescript_declarations_and_literals() {
+    assert_next_line_is_idempotent(
+        "interface I {}\nenum E {}\nnamespace N {}\ndeclare module \"m\" {}\ndeclare global {}\ntype T = {};\nconst o = {};\nlet v: {} = {};\nfunction p(a: {}) {}\nconst {} = o;\nx = {} as A;\n",
+        SourceType::ts(),
+        "interface I\n{\n}\nenum E\n{\n}\nnamespace N\n{\n}\ndeclare module \"m\"\n{\n}\ndeclare global\n{\n}\ntype T =\n{\n};\nconst o =\n{\n};\nlet v:\n{\n} =\n{\n};\nfunction p(a:\n{\n})\n{\n}\nconst\n{\n} = o;\nx = {\n} as A;\n",
+    );
+}
+
+#[test]
+fn next_line_splits_empty_object_literals_in_expressions() {
+    assert_next_line_is_idempotent(
+        "f({});\nconst arr = [{}, {}];\nconst nested = { a: {}, b: [] };\nfunction r() { return {}; }\nconst e = () => ({});\nfunction d(a = {}) {}\nfoo = bar || {};\nclass K { #p = {}; }\ntry {} catch ({}) {}\n",
+        SourceType::mjs(),
+        "f(\n  {\n  },\n);\nconst arr = [\n  {\n  },\n  {\n  },\n];\nconst nested =\n{\n  a:\n  {\n  },\n  b: [],\n};\nfunction r()\n{\n  return {\n  };\n}\nconst e = () => ({\n});\nfunction d(\n  a =\n  {\n  },\n)\n{\n}\nfoo =\n  bar ||\n  {\n  };\nclass K\n{\n  #p =\n  {\n  };\n}\ntry\n{\n}\ncatch ({\n})\n{\n}\n",
+    );
+}
+
+#[test]
+fn next_line_indents_comments_in_empty_braces() {
+    assert_next_line_is_idempotent(
+        "function withComment() { /* c */ }\nif (x) { /* c */ }\nclass CC { /* c */ }\nclass S { static { /* c */ } }\nlabel: { /* c */ }\nswitch (x) { /* c */ }\nfoo(() => {\n  // c\n});\n",
+        SourceType::mjs(),
+        "function withComment()\n{\n  /* c */\n}\nif (x)\n{\n  /* c */\n}\nclass CC\n{\n  /* c */\n}\nclass S\n{\n  static\n  {\n    /* c */\n  }\n}\nlabel:\n{\n  /* c */\n}\nswitch (x)\n{\n  /* c */\n}\nfoo(() =>\n{\n  // c\n},\n);\n",
+    );
+}
+
+/// prettier-next-line prints a blank line before the comment in an empty object or enum
+/// (`{` then an empty line then `/* c */`), an artifact of its dangling-comment printing;
+/// the comment is indented like any other empty-brace comment instead.
+#[test]
+fn next_line_indents_comments_in_empty_objects_and_type_literals() {
+    assert_next_line_is_idempotent(
+        "const oc = { /* c */ };\nconst ol = {\n  // line\n};\ntype TC = { /* c */ };\nenum E { /* c */ }\ninterface I {\n  // c\n}\nnamespace N { /* c */ }\n",
+        SourceType::ts(),
+        "const oc =\n{\n  /* c */\n};\nconst ol =\n{\n  // line\n};\ntype TC =\n{\n  /* c */\n};\nenum E\n{\n  /* c */\n}\ninterface I\n{\n  // c\n}\nnamespace N\n{\n  /* c */\n}\n",
+    );
+}
