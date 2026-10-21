@@ -85,8 +85,9 @@ use crate::{
         },
         statement_body::{
             FormatStatementBody, write_brace_keyword_separator, write_comments_between_blocks,
-            write_head_body_separator, write_head_brace_separator, write_node_with_terminator,
-            write_node_with_trailing_comments_before, write_trailing_comments_before,
+            write_empty_brace_content, write_head_body_separator, write_head_brace_separator,
+            write_node_with_terminator, write_node_with_trailing_comments_before,
+            write_trailing_comments_before,
         },
         string::{FormatLiteralStringToken, StringLiteralParentKind},
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
@@ -1083,7 +1084,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, LabeledStatement<'a>> {
         } else {
             // Not `FormatStatementBody`:
             // a labeled non-block body stays on the label's line instead of soft-indenting.
-            write_head_body_separator(body.span().start, f);
+            if matches!(body.as_ref(), Statement::BlockStatement(_)) {
+                write_head_brace_separator(body.span().start, f);
+            } else {
+                write_head_body_separator(body.span().start, f);
+            }
             write!(f, body);
         }
     }
@@ -1303,7 +1308,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSEnumDeclaration<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.members().is_empty() {
-            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+            if f.options().brace_style.is_next_line() {
+                write_empty_brace_content(self.span(), f);
+            } else {
+                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+            }
         } else {
             write!(f, block_indent(&self.members()));
         }
@@ -1724,7 +1733,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSInterfaceBody<'a>> {
         write!(f, [space(), "{"]);
 
         if self.body.is_empty() {
-            write!(f, format_dangling_comments(self.span).with_block_indent());
+            write_empty_brace_content(self.span, f);
         } else {
             write!(f, block_indent(&self.body()));
         }
@@ -1947,7 +1956,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSModuleBlock<'a>> {
 
         write!(f, "{");
         if is_empty_block(&self.body) && directives.is_empty() {
-            write!(f, [format_dangling_comments(span).with_block_indent()]);
+            write_empty_brace_content(span, f);
         } else {
             // Use `FormatStatementsWithImports` formatter (instead of generic `AstNode<Vec<Statement>>` impl)
             // so imports inside ambient modules (`declare module "foo" { ... }`) are sorted when sorting is enabled

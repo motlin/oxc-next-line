@@ -23,7 +23,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BlockStatement<'a>> {
         if is_empty_block(&self.body) {
             if f.context().comments().has_comment_before(self.span.end) {
                 write!(f, block_indent(&format_dangling_comments(self.span)));
-            } else if is_non_collapsible(self.parent()) {
+            } else if f.options().brace_style.is_next_line() || is_non_collapsible(self.parent()) {
                 write!(f, hard_line_break());
             }
         } else {

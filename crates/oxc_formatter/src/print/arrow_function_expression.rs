@@ -19,7 +19,7 @@ use crate::{
 };
 
 use super::{
-    FormatWrite, parameters::has_only_simple_parameters,
+    FormatWrite, block_statement::is_empty_block, parameters::has_only_simple_parameters,
     sequence_expression::sequence_leading_comments_start,
 };
 
@@ -84,6 +84,16 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
         Self { arrow, options }
+    }
+
+    fn is_empty_next_line_block_as_last_call_argument(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        f.options().brace_style.is_next_line()
+            && matches!(
+                self.options.call_argument_layout,
+                Some(GroupedCallArgumentLayout::GroupedLastArgument)
+            )
+            && matches!(&self.arrow.body, ArrowFunctionBody::FunctionBody(body)
+                if body.directives.is_empty() && is_empty_block(&body.statements))
     }
 
     #[inline]
@@ -189,6 +199,11 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         write!(f, [space(), indent(&format_body)]);
                     } else {
                         write!(f, [space(), format_body]);
+                    }
+                    if self.is_empty_next_line_block_as_last_call_argument(f) {
+                        // prettier-next-line ends an empty block hugged as the last call argument
+                        // with the trailing comma and line break of an expression body: `},` then `)`.
+                        write!(f, [FormatTrailingCommas::All, soft_line_break()]);
                     }
                 } else {
                     let should_add_parens = body.as_expression().is_some_and(should_add_parens);

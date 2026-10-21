@@ -1,13 +1,16 @@
 use oxc_ast::{Comment, ast::Statement};
 use oxc_formatter_core::Format;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{empty_line, format_once, hard_line_break, soft_line_indent_or_space, space},
-        trivia::{FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments},
+        trivia::{
+            FormatCommentBeforeContent, FormatLeadingComments, FormatTrailingComments,
+            format_dangling_comments,
+        },
     },
     print::semicolon::write_suppressed_statement,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
@@ -61,6 +64,17 @@ pub fn write_head_brace_separator(body_start: u32, f: &mut JsFormatter<'_, '_>) 
 pub fn write_open_brace_break(f: &mut JsFormatter<'_, '_>) {
     if f.options().brace_style.is_next_line() {
         write!(f, hard_line_break());
+    }
+}
+
+/// The inside of an empty `{}` whose dangling comments get a block indent.
+/// Under [`BraceStyle::NextLine`](crate::BraceStyle::NextLine) the `}` goes on the line after the `{`
+/// even without comments, matching prettier-next-line's `{` / `}` for every empty body.
+pub fn write_empty_brace_content(span: Span, f: &mut JsFormatter<'_, '_>) {
+    if f.options().brace_style.is_next_line() && !f.comments().has_comment_before(span.end) {
+        write!(f, hard_line_break());
+    } else {
+        write!(f, format_dangling_comments(span).with_block_indent());
     }
 }
 
