@@ -411,7 +411,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return layout;
         }
 
-        if self.right_has_leading_alignable_block_comment(f) {
+        if self.right_has_leading_alignable_block_comment(f)
+            || self.right_has_leading_comment_before_next_line_brace(f)
+        {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
@@ -496,6 +498,26 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 .comments_before_iter(right_start)
                 .any(|comment| is_alignable_block_comment(comment, f.source_text()))
         })
+    }
+
+    /// Under [`BraceStyle::NextLine`](crate::BraceStyle::NextLine), a comment before an object-like right-hand side
+    /// breaks after the operator: otherwise a wrapping object leaves the comment ending the operator line
+    /// (`= /* c */` then `{`), which reformats as an own-line comment.
+    fn right_has_leading_comment_before_next_line_brace(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        let right_is_object_like = match self {
+            AssignmentLike::TSTypeAliasDeclaration(decl) => {
+                matches!(decl.type_annotation, TSType::TSTypeLiteral(_))
+            }
+            _ => matches!(
+                self.get_right_expression().map(|expr| expr.inner()),
+                Some(Expression::ObjectExpression(_))
+            ),
+        };
+        f.options().brace_style.is_next_line()
+            && right_is_object_like
+            && self
+                .right_start()
+                .is_some_and(|right_start| f.comments().has_comment_before(right_start))
     }
 
     /// Start of the RHS: the value, the type annotation of a type alias.

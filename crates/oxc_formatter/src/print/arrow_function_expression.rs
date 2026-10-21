@@ -673,13 +673,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 /// as a grouped call argument this decision runs again in the re-format pass.
 /// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
 /// so any hit in this range belongs to the body.
+///
+/// Under [`BraceStyle::NextLine`](crate::BraceStyle::NextLine), a block comment on the `=>` line
+/// before a block body is not own-line: the body's head separator ends that line itself (`=> /* c */` then `{`),
+/// so reformatting that output must keep the comment where it is.
 fn has_own_line_comment_before_body<'a>(
     arrow: &AstNode<'_, 'a, ArrowFunctionExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let signature_end =
         arrow.return_type().map_or_else(|| arrow.params().span().end, |rt| rt.span().end);
-    f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
+    let body_start = arrow.body().span().start;
+    if f.options().brace_style.is_next_line() && arrow.get_expression().is_none() {
+        return f.comments().all_comments_in_range(signature_end, body_start).any(|comment| {
+            comment.followed_by_newline() && (comment.is_line() || comment.preceded_by_newline())
+        });
+    }
+    f.comments().has_own_line_comment_in_range(signature_end, body_start)
 }
 
 fn should_add_parens(expression: AstNode<'_, '_, Expression<'_>>) -> bool {
