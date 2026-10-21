@@ -180,3 +180,37 @@ fn next_line_puts_wrapped_export_braces_on_the_next_line() {
         "export\n{\n  alphaaaaaa,\n  betaaaaaaa,\n  gammaaaaa,\n} from \"x\";\n",
     );
 }
+
+fn assert_next_line_is_idempotent(source_text: &str, source_type: SourceType, expected: &str) {
+    let first_pass = format_with(source_text, source_type, BraceStyle::NextLine);
+    let second_pass = format_with(&first_pass, source_type, BraceStyle::NextLine);
+    assert_eq!(second_pass, first_pass);
+    assert_eq!(first_pass, expected);
+}
+
+#[test]
+fn next_line_is_idempotent_with_a_block_comment_before_a_type_literal_brace() {
+    assert_next_line_is_idempotent(
+        "type M1 = /* c */ {\n  key: string;\n};\ntype A = /* 1 */ /* 2 */ /* 3 */ /* 4 */ {\n  key: string;\n};\n",
+        SourceType::ts(),
+        "type M1 =\n  /* c */\n  {\n    key: string;\n  };\ntype A =\n  /* 1 */ /* 2 */ /* 3 */ /* 4 */\n  {\n    key: string;\n  };\n",
+    );
+}
+
+#[test]
+fn next_line_is_idempotent_with_a_block_comment_before_an_arrow_body_brace() {
+    assert_next_line_is_idempotent(
+        "() /**/ => //\n  () /**/ => /**/\n    () /**/ => /**/ {\n      //\n    }\n",
+        SourceType::mjs(),
+        "() /**/ =>\n  //\n  () /**/ =>\n  /**/\n  () /**/ => /**/\n  {\n    //\n  };\n",
+    );
+}
+
+#[test]
+fn next_line_is_idempotent_with_a_block_comment_before_an_arrow_body_brace_in_a_call() {
+    assert_next_line_is_idempotent(
+        "call(\n  () /**/ => //\n    () /**/ => /**/\n      () /**/ => /**/ {\n        //\n      }\n);\n",
+        SourceType::mjs(),
+        "call(() /**/ =>\n  //\n  () /**/ =>\n  /**/\n  () /**/ => /**/\n  {\n    //\n  },\n);\n",
+    );
+}
