@@ -174,8 +174,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectPatternLike<'a, '_> {
         });
 
         match self.layout(f) {
-            ObjectPatternLayout::Empty if f.options().brace_style.is_next_line() => {
-                // prettier-next-line always splits an empty pattern onto two lines,
+            ObjectPatternLayout::Empty
+                if f.options().brace_style.is_next_line()
+                    && f.context().comments().has_comment_before(self.span().end) =>
+            {
+                // An empty pattern holding only comments indents them,
                 // breaking before the `{` unless the pattern is a parameter: `catch ({` then `})`.
                 let content = format_with(|f| write_empty_brace_content(self.span(), f));
                 if self.is_inline(f) || self.is_catch_parameter() {
