@@ -83,13 +83,22 @@ fn format_next_line_narrow(source_text: &str, source_type: SourceType) -> String
 }
 
 #[test]
-fn next_line_keeps_braces_that_fit_on_one_line_inline() {
+fn next_line_keeps_imports_exports_and_destructuring_that_fit_inline() {
     assert_eq!(
         format_next_line_narrow(
-            "import { a } from \"x\";\nconst value = { a: 1 };\nconst { b } = value;\ntype T = { c: string };",
+            "import { a } from \"x\";\nexport { a };\nconst { b } = value;",
             SourceType::ts(),
         ),
-        "import { a } from \"x\";\nconst value = { a: 1 };\nconst { b } = value;\ntype T = { c: string };\n",
+        "import { a } from \"x\";\nexport { a };\nconst { b } = value;\n",
+    );
+}
+
+#[test]
+fn next_line_always_breaks_non_empty_objects_and_type_literals() {
+    assert_next_line_is_idempotent(
+        "const value = { a: 1 };\ntype Point = { x: number; y: number };\nf({ a: 1 });\nfunction r() { return { a: 1 }; }\n",
+        SourceType::ts(),
+        "const value =\n{\n  a: 1,\n};\ntype Point =\n{\n  x: number;\n  y: number;\n};\nf(\n  {\n    a: 1,\n  },\n);\nfunction r()\n{\n  return {\n    a: 1,\n  };\n}\n",
     );
 }
 
@@ -220,16 +229,16 @@ fn next_line_splits_empty_function_and_arrow_bodies() {
     assert_next_line_is_idempotent(
         "const f = () => {};\nconst h = (a, b) => {};\nconst g = function () {};\nitems.forEach(function () {});\nfunction noop() {}\nasync function* gen() {}\nexport default function () {}\n",
         SourceType::mjs(),
-        "const f = () =>\n{\n};\nconst h = (a, b) =>\n{\n};\nconst g = function ()\n{\n};\nitems.forEach(function ()\n{\n});\nfunction noop()\n{\n}\nasync function* gen()\n{\n}\nexport default function ()\n{\n}\n",
+        "const f = () =>\n{\n};\nconst h = (a, b) =>\n{\n};\nconst g = function ()\n{\n};\nitems.forEach(function () {});\nfunction noop()\n{\n}\nasync function* gen()\n{\n}\nexport default function ()\n{\n}\n",
     );
 }
 
 #[test]
-fn next_line_splits_empty_arrow_call_arguments() {
+fn next_line_keeps_empty_callbacks_inline() {
     assert_next_line_is_idempotent(
         "Event.debounce(call(A, B), DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD)(() => {});\nfoo(() => {});\nfoo(a, b, () => {});\nnew Promise(() => {});\nconst fnArg = useCallback(() => {}, []);\nx.then(() => {}, () => {});\n",
         SourceType::mjs(),
-        "Event.debounce(\n  call(A, B),\n  DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD,\n)(() =>\n{\n},\n);\nfoo(() =>\n{\n},\n);\nfoo(a, b, () =>\n{\n},\n);\nnew Promise(() =>\n{\n},\n);\nconst fnArg = useCallback(() =>\n{\n}, []);\nx.then(\n  () =>\n  {\n  },\n  () =>\n  {\n  },\n);\n",
+        "Event.debounce(call(A, B), DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD)(() => {});\nfoo(() => {});\nfoo(a, b, () => {});\nnew Promise(() => {});\nconst fnArg = useCallback(() => {}, []);\nx.then(\n  () => {},\n  () => {},\n);\n",
     );
 }
 
@@ -252,20 +261,20 @@ fn next_line_splits_empty_statement_blocks() {
 }
 
 #[test]
-fn next_line_splits_empty_typescript_declarations_and_literals() {
+fn next_line_splits_empty_typescript_declarations_but_not_literals() {
     assert_next_line_is_idempotent(
         "interface I {}\nenum E {}\nnamespace N {}\ndeclare module \"m\" {}\ndeclare global {}\ntype T = {};\nconst o = {};\nlet v: {} = {};\nfunction p(a: {}) {}\nconst {} = o;\nx = {} as A;\n",
         SourceType::ts(),
-        "interface I\n{\n}\nenum E\n{\n}\nnamespace N\n{\n}\ndeclare module \"m\"\n{\n}\ndeclare global\n{\n}\ntype T =\n{\n};\nconst o =\n{\n};\nlet v:\n{\n} =\n{\n};\nfunction p(a:\n{\n})\n{\n}\nconst\n{\n} = o;\nx = {\n} as A;\n",
+        "interface I\n{\n}\nenum E\n{\n}\nnamespace N\n{\n}\ndeclare module \"m\"\n{\n}\ndeclare global\n{\n}\ntype T = {};\nconst o = {};\nlet v: {} = {};\nfunction p(a: {})\n{\n}\nconst {} = o;\nx = {} as A;\n",
     );
 }
 
 #[test]
-fn next_line_splits_empty_object_literals_in_expressions() {
+fn next_line_keeps_empty_object_literals_and_patterns_inline() {
     assert_next_line_is_idempotent(
         "f({});\nconst arr = [{}, {}];\nconst nested = { a: {}, b: [] };\nfunction r() { return {}; }\nconst e = () => ({});\nfunction d(a = {}) {}\nfoo = bar || {};\nclass K { #p = {}; }\ntry {} catch ({}) {}\n",
         SourceType::mjs(),
-        "f(\n  {\n  },\n);\nconst arr = [\n  {\n  },\n  {\n  },\n];\nconst nested =\n{\n  a:\n  {\n  },\n  b: [],\n};\nfunction r()\n{\n  return {\n  };\n}\nconst e = () => ({\n});\nfunction d(\n  a =\n  {\n  },\n)\n{\n}\nfoo =\n  bar ||\n  {\n  };\nclass K\n{\n  #p =\n  {\n  };\n}\ntry\n{\n}\ncatch ({\n})\n{\n}\n",
+        "f({});\nconst arr = [{}, {}];\nconst nested =\n{\n  a: {},\n  b: [],\n};\nfunction r()\n{\n  return {};\n}\nconst e = () => ({});\nfunction d(a = {})\n{\n}\nfoo = bar || {};\nclass K\n{\n  #p = {};\n}\ntry\n{\n}\ncatch ({})\n{\n}\n",
     );
 }
 
@@ -274,7 +283,7 @@ fn next_line_indents_comments_in_empty_braces() {
     assert_next_line_is_idempotent(
         "function withComment() { /* c */ }\nif (x) { /* c */ }\nclass CC { /* c */ }\nclass S { static { /* c */ } }\nlabel: { /* c */ }\nswitch (x) { /* c */ }\nfoo(() => {\n  // c\n});\n",
         SourceType::mjs(),
-        "function withComment()\n{\n  /* c */\n}\nif (x)\n{\n  /* c */\n}\nclass CC\n{\n  /* c */\n}\nclass S\n{\n  static\n  {\n    /* c */\n  }\n}\nlabel:\n{\n  /* c */\n}\nswitch (x)\n{\n  /* c */\n}\nfoo(() =>\n{\n  // c\n},\n);\n",
+        "function withComment()\n{\n  /* c */\n}\nif (x)\n{\n  /* c */\n}\nclass CC\n{\n  /* c */\n}\nclass S\n{\n  static\n  {\n    /* c */\n  }\n}\nlabel:\n{\n  /* c */\n}\nswitch (x)\n{\n  /* c */\n}\nfoo(() =>\n{\n  // c\n});\n",
     );
 }
 
@@ -287,5 +296,14 @@ fn next_line_indents_comments_in_empty_objects_and_type_literals() {
         "const oc = { /* c */ };\nconst ol = {\n  // line\n};\ntype TC = { /* c */ };\nenum E { /* c */ }\ninterface I {\n  // c\n}\nnamespace N { /* c */ }\n",
         SourceType::ts(),
         "const oc =\n{\n  /* c */\n};\nconst ol =\n{\n  // line\n};\ntype TC =\n{\n  /* c */\n};\nenum E\n{\n  /* c */\n}\ninterface I\n{\n  // c\n}\nnamespace N\n{\n  /* c */\n}\n",
+    );
+}
+
+#[test]
+fn next_line_keeps_empty_patterns_with_defaults_inline() {
+    assert_next_line_is_idempotent(
+        "function f({} = {}) {}\nconst [{} = x] = o;\n",
+        SourceType::mjs(),
+        "function f({} = {})\n{\n}\nconst [{} = x] = o;\n",
     );
 }
