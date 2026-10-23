@@ -6,11 +6,13 @@ use super::{
     FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,
 };
 use crate::{
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::prelude::*,
     print::semicolon::OptionalSemicolon,
-    utils::statement_body::{write_empty_brace_content, write_head_brace_separator},
+    utils::statement_body::{
+        write_empty_brace_content, write_head_body_separator, write_head_brace_separator,
+    },
     write,
 };
 
@@ -118,13 +120,42 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
     }
 }
 
+impl<'a> AstNode<'_, 'a, FunctionBody<'a>> {
+    /// Whether this is the body of a function or arrow passed as a call argument.
+    fn is_callback_body(&self) -> bool {
+        let function = self.parent();
+        let (AstNodes::Function(_) | AstNodes::ArrowFunctionExpression(_)) = function else {
+            return false;
+        };
+        let span = function.span();
+        match function.parent() {
+            AstNodes::CallExpression(call) => call.is_argument_span(span),
+            AstNodes::NewExpression(new) => new.is_argument_span(span),
+            _ => false,
+        }
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FunctionBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write_head_brace_separator(self.span.start, f);
-
         let statements = self.statements();
         let directives = self.directives();
-        if is_empty_block(&statements) && directives.is_empty() {
+        let is_empty = is_empty_block(&statements) && directives.is_empty();
+
+        if is_empty
+            && f.options().brace_style.is_next_line()
+            && !f.comments().has_comment_before(self.span.end)
+            && self.is_callback_body()
+        {
+            // An empty callback stays `{}` on the call's line: `foo(() => {})`
+            write_head_body_separator(self.span.start, f);
+            write!(f, "{}");
+            return;
+        }
+
+        write_head_brace_separator(self.span.start, f);
+
+        if is_empty {
             write!(f, "{");
             write_empty_brace_content(self.span, f);
             write!(f, "}");
