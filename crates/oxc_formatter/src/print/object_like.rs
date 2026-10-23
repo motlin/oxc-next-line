@@ -99,7 +99,7 @@ impl<'a> ObjectLike<'a, '_> {
         false
     }
 
-    /// Whether an empty object-like moves its `{` onto its own line, as prettier-next-line does:
+    /// Whether an empty object-like holding only comments moves its `{` onto its own line:
     /// a type literal always, and an object literal only as the value of an assignment, a default,
     /// a property, or a class field (`x =` then `{`), so `f({})` and `return {` keep it attached.
     fn empty_breaks_before_brace(&self) -> bool {
@@ -138,8 +138,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 
-        if self.members_are_empty() && f.options().brace_style.is_next_line() {
-            // prettier-next-line always splits an empty object onto two lines
+        if self.members_are_empty()
+            && f.options().brace_style.is_next_line()
+            && f.comments().has_comment_before(self.span().end)
+        {
+            // An empty object holding only comments indents them like any other empty brace
             let content = format_with(|f| write_empty_brace_content(self.span(), f));
             if self.empty_breaks_before_brace() {
                 write!(f, group(&format_args!(soft_line_break(), "{", content, "}")));
@@ -153,8 +156,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
             write!(f, ["{", format_dangling_comments(self.span()).with_soft_block_indent(), "}"]);
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-            let should_expand =
-                f.options().expand == Expand::Auto && self.members_have_leading_newline(f);
+            // Next-line braces always expand a non-empty object, as prettier-next-line does.
+            let should_expand = f.options().brace_style.is_next_line()
+                || (f.options().expand == Expand::Auto && self.members_have_leading_newline(f));
 
             // If the object type is the type annotation of the only parameter in a function,
             // try to hug the parameter; we don't create a group and inline the contents here.
