@@ -68,6 +68,7 @@ fmt:
   -cargo shear --fix --check-test-targets # remove all unused dependencies
   cargo fmt
   node --run fmt
+  node apps/oxfmt/dist/cli.js npm/oxfmt/README.md # fork: next-line examples need the fork's build
 
 [unix]
 doc *args:

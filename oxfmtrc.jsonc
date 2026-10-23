@@ -18,6 +18,8 @@
     "**/CHANGELOG.md",
     "**/*.snap.md",
     "**/DIVERGENCES.md",
+    // Fork: formatted by the fork's own CLI in `just fmt`, since its examples use next-line braces
+    "npm/oxfmt/README.md",
     "apps/oxfmt/conformance/snapshots/**",
     "apps/oxlint/conformance/snapshots/**",
     "tasks/coverage/node-compat-table",

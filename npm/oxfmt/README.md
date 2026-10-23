@@ -16,18 +16,18 @@ function example(value)
   }
 }
 
-const settings = { enabled: true };
-const wrapped =
+const settings =
 {
-  alpha: 1111111111,
-  beta: 2222222222,
-  gamma: 3333333333,
-  delta: 4444444444,
+  enabled: true,
 };
+import { alpha, beta } from "./letters";
+items.forEach(() => {});
 ```
 
 Every block's `{` starts its own line, and `else` / `catch` / `finally` start a new line.
-Objects, imports, exports, destructuring and type literals stay inline while they fit and move `{` down once they wrap.
+Object literals and type literals always break, one member per line.
+Imports, exports and destructuring stay inline while they fit and move `{` down once they wrap.
+An empty `{}` stays on one line, except as the body of a function, class or statement.
 `return {` stays together, since splitting it would change the program.
 CSS, SCSS, Less, GraphQL and JSON follow the same rule.
 
