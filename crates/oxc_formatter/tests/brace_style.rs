@@ -225,6 +225,15 @@ fn next_line_is_idempotent_with_a_block_comment_before_an_arrow_body_brace_in_a_
 }
 
 #[test]
+fn next_line_breaks_a_union_that_starts_with_a_comment_and_an_object() {
+    assert_next_line_is_idempotent(
+        "type C = /* multi\n * line */ { a: 1 } | null;\ntype E =\n  // c\n  { a: 1 } | null;\n",
+        SourceType::ts(),
+        "type C =\n  | /* multi\n     * line */\n    {\n      a: 1;\n    }\n  | null;\ntype E =\n  // c\n  |\n    {\n      a: 1;\n    }\n  | null;\n",
+    );
+}
+
+#[test]
 fn next_line_splits_empty_function_and_arrow_bodies() {
     assert_next_line_is_idempotent(
         "const f = () => {};\nconst h = (a, b) => {};\nconst g = function () {};\nitems.forEach(function () {});\nfunction noop() {}\nasync function* gen() {}\nexport default function () {}\n",

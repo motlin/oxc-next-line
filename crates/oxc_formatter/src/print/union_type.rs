@@ -61,8 +61,17 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSUnionType<'a>> {
             //   /** JSDoc */
             //   | 'VALUE';
             // ```
+            // fork: next-line breaks the hugged object, and the assignment moves a leading multi-line `*` block comment
+            // onto its own line, so the next pass would see an own-line comment and switch to the `|` layout.
+            // Take that layout on the first pass instead.
             let has_comment_before_pipe =
-                f.comments().has_leading_own_line_comment(self.span().start);
+                f.comments().has_leading_own_line_comment(self.span().start)
+                    || (f.options().brace_style.is_next_line()
+                        && !is_single_plain_member
+                        && f.comments()
+                            .comments_before(self.span().start)
+                            .iter()
+                            .any(|comment| is_alignable_block_comment(comment, f.source_text())));
             // ```ts
             // type A = |
             //   // Comment
