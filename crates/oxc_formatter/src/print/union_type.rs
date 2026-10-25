@@ -437,6 +437,18 @@ fn alias_union_hugs(union: &AstNode<'_, '_, TSUnionType<'_>>, f: &JsFormatter<'_
     if !should_hug_type(union, f) {
         return false;
     }
+    // fork: next-line breaks the hugged object, and the assignment moves a leading multi-line `*` block comment
+    // onto its own line, so the next pass would see an own-line comment and switch to the `|` layout.
+    // Take that layout on the first pass instead.
+    if f.options().brace_style.is_next_line()
+        && single_plain_member(union).is_none()
+        && f.comments()
+            .comments_before(union.span.start)
+            .iter()
+            .any(|comment| is_alignable_block_comment(comment, f.source_text()))
+    {
+        return false;
+    }
     // Several members keep the hug: a line-ending leading comment never changes how they are laid out.
     if union.types.len() != 1 {
         return true;
