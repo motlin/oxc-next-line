@@ -2,6 +2,9 @@ name: Release oxfmt-next-line
 
 permissions: {}
 
+# CI builds the packages but never publishes them.
+# `just release` downloads the `oxfmt-next-line-npm` artifact and publishes it with the maintainer's npm login,
+# then pushes the release tag, which creates the GitHub Release below.
 on:
   workflow_dispatch:
   push:
@@ -9,6 +12,8 @@ on:
       - main
     paths:
       - npm/oxfmt/package.json
+    tags:
+      - "oxfmt-next-line@*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +21,7 @@ concurrency:
 
 jobs:
   check:
-    if: github.repository == 'motlin/oxc-next-line'
+    if: github.repository == 'motlin/oxc-next-line' && github.ref_type == 'branch'
     name: Check version
     runs-on: ubuntu-latest
     outputs:
@@ -206,23 +211,15 @@ jobs:
           name: oxfmt-bindings-x86_64-unknown-freebsd
           path: apps/oxfmt/src-js/*.node
 
-  publish:
-    name: Publish oxfmt-next-line
+  package:
+    name: Package oxfmt-next-line
     needs: [check, build-oxfmt, build-oxfmt-freebsd]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # for pushing the release tag
-      id-token: write # for npm provenance
     env:
       package_path: npm/oxfmt
       npm_dir: npm/oxfmt-release
-      PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      npm_config_provenance: "true"
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: true
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - parallel:
           - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -230,9 +227,6 @@ jobs:
               path: artifacts
               pattern: oxfmt-bindings-*
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-
-      - name: Authenticate to npm
-        run: echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
 
       - name: Generate oxfmt JS build
         working-directory: apps/oxfmt
@@ -250,17 +244,27 @@ jobs:
       - name: Check Publish
         run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
 
-      - name: Publish
-        run: |
-          # Publish sub-packages and adds `optionalDependencies` to main package.
-          pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
-          # npm publish can finish before package metadata and tarballs are available.
-          node .github/scripts/wait-for-npm-packages.mjs ${npm_dir}/*
-          bash .github/scripts/publish-if-needed.sh ${package_path} ${PUBLISH_FLAGS}
+      - name: Add optionalDependencies without publishing
+        run: pnpm napi pre-publish --no-gh-release --skip-optional-publish -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
-      - name: Tag release
-        env:
-          VERSION: ${{ needs.check.outputs.version }}
-        run: |
-          git tag "oxfmt-next-line@${VERSION}" "${GITHUB_SHA}"
-          git push origin "refs/tags/oxfmt-next-line@${VERSION}"
+      - name: Upload npm packages
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          if-no-files-found: error
+          name: oxfmt-next-line-npm
+          path: |
+            ${{ env.package_path }}
+            ${{ env.npm_dir }}
+            !${{ env.package_path }}/node_modules
+
+  github-release:
+    if: github.repository == 'motlin/oxc-next-line' && github.ref_type == 'tag'
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # for creating the release
+    steps:
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
